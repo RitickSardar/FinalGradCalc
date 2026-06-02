@@ -29,17 +29,18 @@ const HS_SCALE: GradeEntry[] = [
 ];
 
 const GradeScale: React.FC = () => {
-  const [scale, setScale] = useState<GradeEntry[]>(COLLEGE_SCALE);
+  const [scale, setScale] = useState<GradeEntry[]>(COLLEGE_SCALE.map(entry => ({ ...entry })));
   const [activeTab, setActiveTab] = useState<'college' | 'hs'>('college');
 
   const handleTabChange = (tab: 'college' | 'hs') => {
-    setActiveTab(tab);
-    setScale(tab === 'college' ? COLLEGE_SCALE : HS_SCALE);
+  setActiveTab(tab);
+  setScale((tab === 'college' ? COLLEGE_SCALE : HS_SCALE).map(entry => ({ ...entry })));
   };
 
   const updateMinPercent = (index: number, val: number) => {
-    const newScale = [...scale];
-    newScale[index].minPercent = val;
+    const newScale = scale.map((entry, i) =>
+      i === index ? { ...entry, minPercent: val } : entry
+    );
     setScale(newScale);
   };
 
@@ -66,6 +67,13 @@ const GradeScale: React.FC = () => {
               Standard
             </button>
           </div>
+          <button
+            onClick={() => setScale(
+              (activeTab === 'college' ? COLLEGE_SCALE : HS_SCALE).map(entry => ({ ...entry }))
+            )}
+            className="text-xs font-semibold text-gray-500 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors underline underline-offset-2">
+        Reset to default
+        </button>
         </div>
 
         <div className="p-4 md:p-6">
@@ -92,9 +100,22 @@ const GradeScale: React.FC = () => {
                       className="w-20 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg px-2 py-1 text-black dark:text-white text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                     />
                  </div>
-                 <div className="text-right font-mono font-bold text-blue-400 text-lg">
-                   {entry.gpa.toFixed(1)}
-                 </div>
+                 <div className="flex justify-end">
+                  <input
+                    type="number"
+                    value={entry.gpa}
+                    step="0.1"
+                    min="0"
+                    max="5"
+                    onChange={(e) => {
+                      const newScale = scale.map((item, i) =>
+                        i === idx ? { ...item, gpa: Math.min(5, Math.max(0, Number(e.target.value))) } : item
+                      );
+                      setScale(newScale);
+                    }}
+                    className="w-20 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg px-2 py-1 text-blue-400 font-mono font-bold text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  />
+              </div>
                </div>
              ))}
            </div>

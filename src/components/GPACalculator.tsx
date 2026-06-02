@@ -22,7 +22,7 @@ const GPACalculator: React.FC = () => {
   ]);
 
   const addCourse = () => {
-    setCourses([...courses, { id: Math.random().toString(36).substr(2, 9), name: '', grade: 'A', credits: 3, isWeighted: false }]);
+    setCourses([...courses, { id: Math.random().toString(36).substring(2, 9), name: '', grade: 'A', credits: 3, isWeighted: false }]);
   };
 
   const removeCourse = (id: string) => {
@@ -41,13 +41,21 @@ const GPACalculator: React.FC = () => {
 
     courses.forEach(c => {
       const basePoints = GRADE_POINTS[c.grade] || 0;
-      const weightedPoints = c.isWeighted ? basePoints + 1.0 : basePoints;
+      const weightedPoints = c.isWeighted ? Math.min(5.0, basePoints + 1.0) : basePoints;
       totalPoints += weightedPoints * c.credits;
       totalCredits += c.credits;
     });
 
     return totalCredits > 0 ? totalPoints / totalCredits : 0;
   }, [courses]);
+
+    const getGPALabel = (val: number) => {
+    if (val >= 3.9) return "Summa Cum Laude";
+    if (val >= 3.7) return "Magna Cum Laude";
+    if (val >= 3.5) return "Cum Laude";
+    if (val >= 2.0) return "Good Standing";
+    return "Academic Probation";
+  };
 
   const getGPAColor = (val: number) => {
     if (val >= 3.5) return 'text-emerald-400';
@@ -111,7 +119,7 @@ const GPACalculator: React.FC = () => {
                   <input 
                     type="number" 
                     value={course.credits}
-                    onChange={(e) => updateCourse(course.id, { credits: Number(e.target.value) })}
+                    onChange={(e) => updateCourse(course.id, { credits: Math.max(0.5, Number(e.target.value)) })}
                     className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2 text-black dark:text-white text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   />
                 </div>
@@ -143,6 +151,7 @@ const GPACalculator: React.FC = () => {
           <div className="text-center md:text-left">
             <p className="text-gray-600 dark:text-slate-400 font-medium">Your Cumulative GPA</p>
             <h1 className={`text-7xl font-black ${getGPAColor(gpa)}`}>{gpa.toFixed(2)}</h1>
+            <span className={`text-sm font-bold ${getGPAColor(gpa)}`}>{getGPALabel(gpa)}</span>
           </div>
           <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
              <div className="bg-gray-100 dark:bg-slate-800/50 p-4 rounded-2xl border border-gray-300 dark:border-slate-700 text-center">

@@ -53,6 +53,8 @@ const Calculator: React.FC = () => {
   const currentLetter = getLetterGrade(currentGradePct);
   const whatIfLetter = getLetterGrade(whatIfFinalGrade);
 
+    // const hasValidInputs = safeNum(totalPoints) > 0 && safeNum(finalWeight) > 0;
+
   return (
     <div className="w-full">
       {/* Embedded CSS to hide ugly default number arrows */}
@@ -100,7 +102,7 @@ const Calculator: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wider ml-1">Final Weight (%)</label>
-                <input type="number" value={finalWeight} onChange={(e) => setFinalWeight(e.target.value ? Number(e.target.value) : '')} className="w-full bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-black dark:text-white text-lg font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder-slate-600" placeholder="20" />
+                <input type="number" value={finalWeight} onChange={(e) => setFinalWeight(e.target.value ? Math.min(100, Math.max(0, Number(e.target.value))) : '')}className="w-full bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-black dark:text-white text-lg font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder-slate-600" placeholder="20" />
               </div>
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wider ml-1">Target Grade (%)</label>
@@ -145,7 +147,11 @@ const Calculator: React.FC = () => {
               <p className="text-blue-100/90 font-medium tracking-wide text-sm mb-2 uppercase">To achieve your target</p>
               <div className="flex items-baseline gap-2 mb-1">
                 <h1 className="text-7xl font-black tracking-tighter">
-                  {requiredFinal > 150 ? 'N/A' : requiredFinal < 0 ? '0' : requiredFinal.toFixed(1)}<span className="text-4xl text-blue-200">%</span>
+                  {requiredFinal > 150 
+                ? 'N/A' 
+                : requiredFinal < 0 
+                    ? '0 — Already Passing!' 
+                    : requiredFinal.toFixed(1)}<span className="text-4xl text-blue-200">%</span>
                 </h1>
               </div>
               <p className="text-blue-200/80 text-sm mt-3 bg-white/10 px-4 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
@@ -195,8 +201,8 @@ const Calculator: React.FC = () => {
               />
               <div className="absolute top-10 left-0 w-full flex justify-between text-[10px] font-bold text-gray-500 dark:text-slate-500">
                 <span>0%</span>
-                <span>50%</span>
-                <span>100%</span>
+                <span>55%</span>
+                <span>110%</span>
               </div>
             </div>
 
