@@ -16,7 +16,7 @@ const isActive = (path: string) => {
 };
 ---
 
-<html lang="en">
+<html lang="en" class="bg-gray-50 dark:bg-black">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -43,7 +43,7 @@ const isActive = (path: string) => {
 			})();
 		</script>
 	</head>
-	<body class="bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-50 font-['Inter',sans-serif] selection:bg-blue-500/30 transition-colors duration-300">
+	<body class="text-gray-900 dark:text-gray-50 font-['Inter',sans-serif] selection:bg-blue-500/30 transition-colors duration-300">
 		
 		{/* Interactive Dots Canvas */}
 		<canvas id="dotsCanvas" class="fixed inset-0 -z-20 pointer-events-none"></canvas>
@@ -79,18 +79,55 @@ const isActive = (path: string) => {
 
 		<slot />
 
-		<footer class="border-t border-gray-200 dark:border-white/10 py-12 bg-gray-50 dark:bg-black transition-colors duration-300">
+		<footer class="border-t border-gray-200 dark:border-white/10 py-12 bg-transparent transition-colors duration-300">
 			<div class="max-w-7xl mx-auto px-4 text-center space-y-4">
 				<p class="text-gray-500 dark:text-gray-400 text-sm">
 					&copy; {new Date().getFullYear()} PassMyFinals.com. Built for high-performance students.
 				</p>
 				<div class="flex justify-center gap-6 text-xs text-gray-500 dark:text-gray-500">
-					<a href="#" class="hover:text-black dark:hover:text-gray-300 transition-colors">Privacy Policy</a>
-					<a href="#" class="hover:text-black dark:hover:text-gray-300 transition-colors">Terms of Service</a>
-					<a href="#" class="hover:text-black dark:hover:text-gray-300 transition-colors">Contact Us</a>
+					{/* Changed these from <a> tags to <button> tags to trigger the modals */}
+					<button onclick="privacyModal.showModal()" class="hover:text-black dark:hover:text-gray-300 transition-colors cursor-pointer">Privacy Policy</button>
+					<button onclick="tosModal.showModal()" class="hover:text-black dark:hover:text-gray-300 transition-colors cursor-pointer">Terms of Service</button>
+					
+					{/* This triggers their default email client */}
+					<a href="https://github.com/RitickSardar" target="_blank" rel="noopener noreferrer" class="hover:text-black dark:hover:text-gray-300 transition-colors">GitHub Source</a>
 				</div>
 			</div>
 		</footer>
+
+		{/* --- The Modals --- */}
+		
+		{/* Privacy Modal */}
+		<dialog id="privacyModal" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white p-6 rounded-2xl shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm border border-gray-200 dark:border-slate-800 max-w-md w-full m-auto open:animate-in open:fade-in open:zoom-in-95 duration-200">
+			<div class="flex items-center gap-3 mb-4">
+				<div class="p-2 bg-blue-500/10 rounded-xl border border-blue-500/20">
+					<svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+				</div>
+				<h2 class="text-xl font-bold">Honest Privacy Policy</h2>
+			</div>
+			<p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+				This calculator runs 100% locally in your browser. We don't use databases, we don't sell your data, and we definitely don't track your grades. Your late-night academic math is strictly between you and your screen.
+			</p>
+			<form method="dialog" class="flex justify-end">
+				<button class="px-5 py-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-900 dark:text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer border border-gray-200 dark:border-slate-700">Understood</button>
+			</form>
+		</dialog>
+
+		{/* Terms of Service Modal */}
+		<dialog id="tosModal" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white p-6 rounded-2xl shadow-2xl backdrop:bg-black/40 backdrop:backdrop-blur-sm border border-gray-200 dark:border-slate-800 max-w-md w-full m-auto open:animate-in open:fade-in open:zoom-in-95 duration-200">
+			<div class="flex items-center gap-3 mb-4">
+				<div class="p-2 bg-purple-500/10 rounded-xl border border-purple-500/20">
+					<svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+				</div>
+				<h2 class="text-xl font-bold">Terms of Service</h2>
+			</div>
+			<p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+				This is a free tool built to help you plan your finals. While we ensure the math logic is bulletproof, we are not responsible if your professor curves the test differently or if you sleep through your alarm. Use it as a guide, and good luck!
+			</p>
+			<form method="dialog" class="flex justify-end">
+				<button class="px-5 py-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-900 dark:text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer border border-gray-200 dark:border-slate-700">Sounds Fair</button>
+			</form>
+		</dialog>
 
 		<script is:inline>
 			(function() {
@@ -151,6 +188,7 @@ const isActive = (path: string) => {
 							{
 								duration: 500,
 								easing: 'ease-in-out',
+								fill: 'forwards',
 								pseudoElement: isCurrentlyDark ? '::view-transition-old(root)' : '::view-transition-new(root)',
 							}
 						);

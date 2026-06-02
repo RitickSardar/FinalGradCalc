@@ -1,11 +1,30 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
+			@utility bg-dotted {
+  			background-image: radial-gradient(rgba(0, 0, 0, 0.15) 1px, transparent 1px);
+  			background-size: 24px 24px;
+			}
 
+			/* Override the utility when the 'dark' class is active */
+			.dark .bg-dotted {
+ 			 background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+			}
+
+			/* Optional fallback if you rely on OS preferences instead of a manual toggle */
+			@media (prefers-color-scheme: dark) {
+			.bg-dotted {
+				background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  			}
+}
 			/* View Transitions for Theme Toggle */
 			::view-transition-old(root),
 			::view-transition-new(root) {
 				animation: none;
 				mix-blend-mode: normal;
+				display: block;
+			}
+			::view-transition-image-pair(root) {
+				isolation: isolate;
 			}
 			.transitioning-to-dark::view-transition-new(root) {
 				z-index: 2;
@@ -19,8 +38,10 @@
 			.transitioning-to-light::view-transition-old(root) {
 				z-index: 2;
 			}
-			.transitioning-to-dark *,
-			.transitioning-to-light * {
+			html.transitioning-to-dark,
+			html.transitioning-to-light,
+			html.transitioning-to-dark *,
+			html.transitioning-to-light * {
 				transition: none !important;
 			}
 
