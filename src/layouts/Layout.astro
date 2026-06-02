@@ -1,4 +1,8 @@
+
+
 ---
+import '../styles/global.css';
+
 interface Props {
 	title: string;
 	description?: string;
@@ -227,43 +231,6 @@ const isActive = (path: string) => {
 			})();
 		</script>
 
-		<style is:global>
-			/* View Transitions for Theme Toggle */
-			::view-transition-old(root),
-			::view-transition-new(root) {
-				animation: none;
-				mix-blend-mode: normal;
-			}
-			.transitioning-to-dark::view-transition-new(root) {
-				z-index: 2;
-			}
-			.transitioning-to-dark::view-transition-old(root) {
-				z-index: 1;
-			}
-			.transitioning-to-light::view-transition-new(root) {
-				z-index: 1;
-			}
-			.transitioning-to-light::view-transition-old(root) {
-				z-index: 2;
-			}
-			.transitioning-to-dark *,
-			.transitioning-to-light * {
-				transition: none !important;
-			}
-
-			/* Custom scrollbar for premium feel */
-			::-webkit-scrollbar {
-				width: 8px;
-			}
-			::-webkit-scrollbar-track {
-				@apply bg-gray-100 dark:bg-black;
-			}
-			::-webkit-scrollbar-thumb {
-				@apply bg-gray-300 dark:bg-white/20 rounded-xl;
-			}
-			::-webkit-scrollbar-thumb:hover {
-				@apply bg-gray-400 dark:bg-white/30;
-			}
-		</style>
+		
 	</body>
 </html>

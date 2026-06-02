@@ -1,0 +1,50 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+			/* View Transitions for Theme Toggle */
+			::view-transition-old(root),
+			::view-transition-new(root) {
+				animation: none;
+				mix-blend-mode: normal;
+			}
+			.transitioning-to-dark::view-transition-new(root) {
+				z-index: 2;
+			}
+			.transitioning-to-dark::view-transition-old(root) {
+				z-index: 1;
+			}
+			.transitioning-to-light::view-transition-new(root) {
+				z-index: 1;
+			}
+			.transitioning-to-light::view-transition-old(root) {
+				z-index: 2;
+			}
+			.transitioning-to-dark *,
+			.transitioning-to-light * {
+				transition: none !important;
+			}
+
+			/* Custom scrollbar for premium feel */
+			::-webkit-scrollbar {
+				width: 8px;
+			}
+			::-webkit-scrollbar-track {
+				background-color: #f3f4f6;
+			}
+			html.dark ::-webkit-scrollbar-track {
+				background-color: #000;
+			}
+			::-webkit-scrollbar-thumb {
+				background-color: #d1d5db;
+				border-radius: 0.75rem;
+			}
+			html.dark ::-webkit-scrollbar-thumb {
+				background-color: rgba(255, 255, 255, 0.2);
+			}
+			::-webkit-scrollbar-thumb:hover {
+				background-color: #9ca3af;
+			}
+			html.dark ::-webkit-scrollbar-thumb:hover {
+				background-color: rgba(255, 255, 255, 0.3);
+			}
+		
