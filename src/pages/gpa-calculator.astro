@@ -1,0 +1,38 @@
+---
+import Layout from '../layouts/Layout.astro';
+import GPACalculator from '../components/GPACalculator';
+
+const title = "Cumulative GPA Calculator | Pass My Finals";
+const description = "Calculate your high school or college GPA with our interactive tool. Supports weighted (AP/Honors) and unweighted GPA calculations.";
+---
+
+<Layout title={title} description={description}>
+	<main class="relative">
+		<header class="pt-20 pb-12 text-center px-4 max-w-3xl mx-auto space-y-6">
+			<h1 class="text-4xl md:text-6xl font-black tracking-tight text-black dark:text-white leading-tight">
+				GPA <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-500">Calculator</span>
+			</h1>
+			<p class="text-lg text-gray-600 dark:text-slate-400 font-medium">
+				Track your academic progress with precision. Add your courses, credits, and grades to see your cumulative GPA in real-time.
+			</p>
+		</header>
+
+		<section class="pb-20">
+			<GPACalculator client:load />
+		</section>
+
+		<section class="bg-white dark:bg-slate-900/30 border-t border-gray-200 dark:border-white/5 py-16">
+			<div class="max-w-4xl mx-auto px-4 prose dark:prose-invert">
+				<h2 class="text-3xl font-bold text-black dark:text-white mb-6">How is GPA Calculated?</h2>
+				<p class="text-gray-700 dark:text-slate-300">
+					Your Grade Point Average (GPA) is a number that summarizes your academic performance. It is calculated by dividing the total number of grade points earned by the total number of credit hours attempted.
+				</p>
+				<h3 class="text-xl font-semibold text-black dark:text-white mt-8 mb-4">Weighted vs. Unweighted GPA</h3>
+				<ul class="text-gray-600 dark:text-slate-400 space-y-2">
+					<li><strong>Unweighted GPA:</strong> All courses are measured on the same 4.0 scale, regardless of difficulty.</li>
+					<li><strong>Weighted GPA:</strong> Factors in the difficulty of your courses. Typically, AP, IB, or Honors courses are given an extra point (e.g., an 'A' is worth 5.0 instead of 4.0).</li>
+				</ul>
+			</div>
+		</section>
+	</main>
+</Layout>

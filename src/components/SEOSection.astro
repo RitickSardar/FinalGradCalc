@@ -1,0 +1,78 @@
+---
+---
+
+<section class="w-full max-w-4xl mx-auto px-4 py-16 space-y-12">
+  <article class="prose dark:prose-invert max-w-none">
+    <h2 class="text-3xl font-bold text-black dark:text-white mb-6">How to Calculate Your Final Grade</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+      <div class="space-y-4 text-gray-700 dark:text-slate-300">
+        <p>
+          Calculating your required final exam score involves understanding <strong>weighted averages</strong>. 
+          Most college and high school courses divide your grade into categories like Homework (20%), 
+          Midterms (40%), and the Final Exam (20-40%).
+        </p>
+        <p>
+          The formula our calculator uses is:
+        </p>
+        <div class="bg-white dark:bg-slate-900 p-4 rounded-xl font-mono text-sm border border-gray-200 dark:border-slate-800 text-blue-400">
+          Required = (Target - (Current × (1 - Weight))) / Weight
+        </div>
+        <p>
+          Where <em>Weight</em> is the percentage your final exam is worth, expressed as a decimal.
+        </p>
+      </div>
+      
+      <div class="bg-white dark:bg-slate-900/40 border border-gray-200 dark:border-slate-800 p-6 rounded-2xl">
+        <h3 class="text-xl font-semibold text-black dark:text-white mb-4">Step-by-Step Manual Guide</h3>
+        <ul class="list-decimal list-inside space-y-3 text-gray-600 dark:text-slate-400 text-sm">
+          <li>Multiply your current grade by (100% - final exam weight).</li>
+          <li>Subtract that result from your target overall grade.</li>
+          <li>Divide the remainder by the final exam weight.</li>
+          <li>The result is the score you need on the final!</li>
+        </ul>
+      </div>
+    </div>
+  </article>
+
+  <div class="space-y-4">
+    <h2 class="text-2xl font-bold text-black dark:text-white">Frequently Asked Questions</h2>
+    
+    <div class="space-y-3">
+      <details class="group bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-xl transition-all duration-300">
+        <summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+          <span class="text-gray-800 dark:text-slate-200 font-medium">What is a weighted grade?</span>
+          <span class="transition-transform group-open:rotate-180">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="p-4 pt-0 text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
+          A weighted grade means different assignments are worth more than others. For example, a final exam worth 30% of your grade has the same impact as 30 homework assignments worth 1% each.
+        </div>
+      </details>
+
+      <details class="group bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-xl transition-all duration-300">
+        <summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+          <span class="text-gray-800 dark:text-slate-200 font-medium">How do "Drop Lowest" calculations work?</span>
+          <span class="transition-transform group-open:rotate-180">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="p-4 pt-0 text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
+          Our calculator allows you to input specific points to drop from your total. This effectively removes those points from the denominator of your grade calculation, raising your current percentage.
+        </div>
+      </details>
+
+      <details class="group bg-white dark:bg-slate-900/50 border border-gray-200 dark:border-slate-800 rounded-xl transition-all duration-300">
+        <summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+          <span class="text-gray-800 dark:text-slate-200 font-medium">What if the calculator says "Impossible"?</span>
+          <span class="transition-transform group-open:rotate-180">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="p-4 pt-0 text-gray-600 dark:text-slate-400 text-sm leading-relaxed">
+          "Impossible" means that even with a perfect 100% (or more, if extra credit is available) on the final exam, you cannot mathematically reach your target grade based on your current standing and the exam's weight.
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
