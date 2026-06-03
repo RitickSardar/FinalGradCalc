@@ -1,46 +1,56 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useDeferredValue } from 'react';
 
 const Calculator: React.FC = () => {
-  // Core State
+  // Core State (Updates Instantly on UI)
   const [currentScore, setCurrentScore] = useState<number | ''>(85);
   const [totalPoints, setTotalPoints] = useState<number | ''>(100);
   const [finalWeight, setFinalWeight] = useState<number | ''>(20);
   const [targetGrade, setTargetGrade] = useState<number | ''>(90);
   
-  // Adjustments
+  // Adjustments (Updates Instantly on UI)
   const [extraCredit, setExtraCredit] = useState<number | ''>('');
   const [dropEarned, setDropEarned] = useState<number | ''>('');
   const [dropTotal, setDropTotal] = useState<number | ''>('');
   
-  // What-If State
+  // What-If State (Updates Instantly on UI)
   const [whatIfScore, setWhatIfScore] = useState<number>(85);
+
+  // DEFERRED STATE: These wait for the browser to be idle before updating
+  const deferredCurrentScore = useDeferredValue(currentScore);
+  const deferredTotalPoints = useDeferredValue(totalPoints);
+  const deferredFinalWeight = useDeferredValue(finalWeight);
+  const deferredTargetGrade = useDeferredValue(targetGrade);
+  const deferredExtraCredit = useDeferredValue(extraCredit);
+  const deferredDropEarned = useDeferredValue(dropEarned);
+  const deferredDropTotal = useDeferredValue(dropTotal);
+  const deferredWhatIfScore = useDeferredValue(whatIfScore);
 
   // Safe Math Helpers
   const safeNum = (val: number | '') => val === '' ? 0 : val;
 
-  // Derived Calculations (Fixed Math)
+  // Derived Calculations (Fixed Math using DEFERRED values)
   const currentGradePct = useMemo(() => {
-    const adjustedTotal = Math.max(1, safeNum(totalPoints) - safeNum(dropTotal));
-    const adjustedScore = Math.max(0, safeNum(currentScore) + safeNum(extraCredit) - safeNum(dropEarned));
+    const adjustedTotal = Math.max(1, safeNum(deferredTotalPoints) - safeNum(deferredDropTotal));
+    const adjustedScore = Math.max(0, safeNum(deferredCurrentScore) + safeNum(deferredExtraCredit) - safeNum(deferredDropEarned));
     return (adjustedScore / adjustedTotal) * 100;
-  }, [currentScore, totalPoints, extraCredit, dropEarned, dropTotal]);
+  }, [deferredCurrentScore, deferredTotalPoints, deferredExtraCredit, deferredDropEarned, deferredDropTotal]);
 
   const requiredFinal = useMemo(() => {
-    const wFinal = safeNum(finalWeight);
-    const wTarget = safeNum(targetGrade);
+    const wFinal = safeNum(deferredFinalWeight);
+    const wTarget = safeNum(deferredTargetGrade);
     if (wFinal <= 0) return 0;
     
     const remainingWeight = 100 - wFinal;
     const currentContribution = currentGradePct * (remainingWeight / 100);
     return (wTarget - currentContribution) / (wFinal / 100);
-  }, [currentGradePct, targetGrade, finalWeight]);
+  }, [currentGradePct, deferredTargetGrade, deferredFinalWeight]);
 
   const whatIfFinalGrade = useMemo(() => {
-    const wFinal = safeNum(finalWeight);
+    const wFinal = safeNum(deferredFinalWeight);
     const remainingWeight = 100 - wFinal;
     const currentContribution = currentGradePct * (remainingWeight / 100);
-    return currentContribution + (whatIfScore * (wFinal / 100));
-  }, [currentGradePct, whatIfScore, finalWeight]);
+    return currentContribution + (deferredWhatIfScore * (wFinal / 100));
+  }, [currentGradePct, deferredWhatIfScore, deferredFinalWeight]);
 
   const getLetterGrade = (grade: number) => {
     if (grade >= 90) return { label: 'A', color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20' };
@@ -52,8 +62,6 @@ const Calculator: React.FC = () => {
 
   const currentLetter = getLetterGrade(currentGradePct);
   const whatIfLetter = getLetterGrade(whatIfFinalGrade);
-
-    // const hasValidInputs = safeNum(totalPoints) > 0 && safeNum(finalWeight) > 0;
 
   return (
     <div className="w-full">
