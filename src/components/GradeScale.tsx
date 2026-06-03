@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 
 interface GradeEntry {
   letter: string;
@@ -28,6 +28,44 @@ const HS_SCALE: GradeEntry[] = [
   { letter: 'F', minPercent: 0, gpa: 0.0 },
 ];
 
+// NEW: Extracted the row and wrapped it in memo() to prevent re-render cascades
+const ScaleRow = memo(({ entry, idx, updateMinPercent, updateGpa }: { 
+  entry: GradeEntry, 
+  idx: number, 
+  updateMinPercent: (idx: number, val: number) => void, 
+  updateGpa: (idx: number, val: number) => void 
+}) => (
+  <div className="grid grid-cols-3 gap-2 items-center px-3 md:px-6 py-3 rounded-2xl bg-gray-100 dark:bg-slate-800/20 border border-transparent hover:border-gray-300 dark:hover:border-slate-700 transition-all group">
+    <div className="flex items-center gap-2 md:gap-4 min-w-0">
+      <div className="w-8 h-8 md:w-10 md:h-10 shrink-0 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center font-black text-sm md:text-base text-black dark:text-white border border-gray-300 dark:border-slate-700 group-hover:bg-blue-600 group-hover:border-blue-500 group-hover:text-white transition-all">
+        {entry.letter}
+      </div>
+      <span className="text-black dark:text-white font-semibold text-xs md:text-sm truncate">{entry.letter} Grade</span>
+    </div>
+
+    <div className="flex justify-center">
+      <input
+        type="number"
+        value={entry.minPercent}
+        onChange={(e) => updateMinPercent(idx, Number(e.target.value))}
+        className="w-16 md:w-20 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg px-1 md:px-2 py-1 text-black dark:text-white text-center text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+      />
+    </div>
+
+    <div className="flex justify-end">
+      <input
+        type="number"
+        value={entry.gpa}
+        step="0.1"
+        min="0"
+        max="5"
+        onChange={(e) => updateGpa(idx, Number(e.target.value))}
+        className="w-16 md:w-20 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg px-1 md:px-2 py-1 text-blue-400 font-mono font-bold text-center text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+      />
+    </div>
+  </div>
+));
+
 const GradeScale: React.FC = () => {
   const [scale, setScale] = useState<GradeEntry[]>(COLLEGE_SCALE.map(entry => ({ ...entry })));
   const [activeTab, setActiveTab] = useState<'college' | 'hs'>('college');
@@ -38,17 +76,17 @@ const GradeScale: React.FC = () => {
   };
 
   const updateMinPercent = (index: number, val: number) => {
-    const newScale = scale.map((entry, i) =>
-      i === index ? { ...entry, minPercent: val } : entry
-    );
-    setScale(newScale);
+    setScale(prev => prev.map((entry, i) => i === index ? { ...entry, minPercent: val } : entry));
+  };
+
+  const updateGpa = (index: number, val: number) => {
+    setScale(prev => prev.map((entry, i) => i === index ? { ...entry, gpa: Math.min(5, Math.max(0, val)) } : entry));
   };
 
   return (
     <div className="w-full max-w-4xl mx-auto p-3 md:p-6">
       <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-3xl border border-gray-200 dark:border-slate-800 shadow-2xl overflow-hidden">
 
-        {/* Header */}
         <div className="p-4 md:p-6 border-b border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/30">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -79,7 +117,6 @@ const GradeScale: React.FC = () => {
           </div>
         </div>
 
-        {/* Table Header */}
         <div className="p-4 md:p-6">
           <div className="grid grid-cols-3 gap-2 px-3 md:px-6 py-3 text-xs font-bold text-gray-500 dark:text-slate-500 uppercase tracking-wider border-b border-gray-200 dark:border-slate-800 mb-3">
             <div>Grade</div>
@@ -87,53 +124,19 @@ const GradeScale: React.FC = () => {
             <div className="text-right">GPA</div>
           </div>
 
-          {/* Rows */}
           <div className="space-y-2">
             {scale.map((entry, idx) => (
-              <div key={entry.letter} className="grid grid-cols-3 gap-2 items-center px-3 md:px-6 py-3 rounded-2xl bg-gray-100 dark:bg-slate-800/20 border border-transparent hover:border-gray-300 dark:hover:border-slate-700 transition-all group">
-                
-                {/* Letter */}
-                <div className="flex items-center gap-2 md:gap-4 min-w-0">
-                  <div className="w-8 h-8 md:w-10 md:h-10 shrink-0 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center font-black text-sm md:text-base text-black dark:text-white border border-gray-300 dark:border-slate-700 group-hover:bg-blue-600 group-hover:border-blue-500 group-hover:text-white transition-all">
-                    {entry.letter}
-                  </div>
-                  <span className="text-black dark:text-white font-semibold text-xs md:text-sm truncate">{entry.letter} Grade</span>
-                </div>
-
-                {/* Min % input */}
-                <div className="flex justify-center">
-                  <input
-                    type="number"
-                    value={entry.minPercent}
-                    onChange={(e) => updateMinPercent(idx, Number(e.target.value))}
-                    className="w-16 md:w-20 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg px-1 md:px-2 py-1 text-black dark:text-white text-center text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  />
-                </div>
-
-                {/* GPA input */}
-                <div className="flex justify-end">
-                  <input
-                    type="number"
-                    value={entry.gpa}
-                    step="0.1"
-                    min="0"
-                    max="5"
-                    onChange={(e) => {
-                      const newScale = scale.map((item, i) =>
-                        i === idx ? { ...item, gpa: Math.min(5, Math.max(0, Number(e.target.value))) } : item
-                      );
-                      setScale(newScale);
-                    }}
-                    className="w-16 md:w-20 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg px-1 md:px-2 py-1 text-blue-400 font-mono font-bold text-center text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  />
-                </div>
-
-              </div>
+              <ScaleRow 
+                key={entry.letter} 
+                entry={entry} 
+                idx={idx} 
+                updateMinPercent={updateMinPercent} 
+                updateGpa={updateGpa} 
+              />
             ))}
           </div>
         </div>
 
-        {/* Footer tip */}
         <div className="p-4 md:p-6 bg-blue-600/5 border-t border-blue-500/10 text-center">
           <p className="text-gray-600 dark:text-slate-400 text-xs md:text-sm">
             <strong className="text-blue-400">Pro Tip:</strong> Most universities use the 4.0 scale shown above. If your syllabus is different, you can manually edit the percentage values.

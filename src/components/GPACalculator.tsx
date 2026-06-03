@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useDeferredValue } from 'react';
 
 interface Course {
   id: string;
@@ -21,6 +21,9 @@ const GPACalculator: React.FC = () => {
     { id: '2', name: '', grade: 'B+', credits: 3, isWeighted: false },
   ]);
 
+  // NEW: Defer the courses array to prevent typing lag
+  const deferredCourses = useDeferredValue(courses);
+
   const addCourse = () => {
     setCourses([...courses, { id: Math.random().toString(36).substring(2, 9), name: '', grade: 'A', credits: 3, isWeighted: false }]);
   };
@@ -35,17 +38,18 @@ const GPACalculator: React.FC = () => {
     setCourses(courses.map(c => c.id === id ? { ...c, ...updates } : c));
   };
 
+  // Math updated to use the deferred state
   const gpa = useMemo(() => {
     let totalPoints = 0;
     let totalCredits = 0;
-    courses.forEach(c => {
+    deferredCourses.forEach(c => {
       const basePoints = GRADE_POINTS[c.grade] || 0;
       const weightedPoints = c.isWeighted ? Math.min(5.0, basePoints + 1.0) : basePoints;
       totalPoints += weightedPoints * c.credits;
       totalCredits += c.credits;
     });
     return totalCredits > 0 ? totalPoints / totalCredits : 0;
-  }, [courses]);
+  }, [deferredCourses]);
 
   const getGPALabel = (val: number) => {
     if (val >= 3.9) return "Summa Cum Laude";
@@ -66,7 +70,6 @@ const GPACalculator: React.FC = () => {
     <div className="w-full max-w-4xl mx-auto p-3 md:p-6">
       <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-3xl border border-gray-200 dark:border-slate-800 shadow-2xl overflow-hidden">
 
-        {/* Header */}
         <div className="p-4 md:p-6 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900/30">
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-black dark:text-white">Cumulative GPA Calculator</h2>
@@ -82,11 +85,8 @@ const GPACalculator: React.FC = () => {
           </button>
         </div>
 
-        {/* Course List */}
         <div className="p-3 md:p-6">
           <div className="space-y-3">
-
-            {/* Desktop Table Header — hidden on mobile */}
             <div className="hidden md:grid grid-cols-12 gap-4 px-4 text-xs font-bold text-gray-500 dark:text-slate-500 uppercase tracking-wider">
               <div className="col-span-4">Course Name</div>
               <div className="col-span-2 text-center">Grade</div>
@@ -97,10 +97,7 @@ const GPACalculator: React.FC = () => {
 
             {courses.map((course) => (
               <div key={course.id} className="bg-gray-100 dark:bg-slate-800/30 rounded-2xl border border-gray-300 dark:border-slate-700/50 transition-all hover:border-gray-400 dark:hover:border-slate-600 overflow-hidden">
-
-                {/* Mobile Layout */}
                 <div className="md:hidden p-3">
-                  {/* Top row: name + delete */}
                   <div className="flex items-center gap-2 mb-3">
                     <input
                       type="text"
@@ -113,10 +110,9 @@ const GPACalculator: React.FC = () => {
                       onClick={() => removeCourse(course.id)}
                       className="text-gray-400 dark:text-slate-500 hover:text-red-400 transition-colors p-2 shrink-0"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path></svg>
                     </button>
                   </div>
-                  {/* Bottom row: grade + credits + weighted */}
                   <div className="grid grid-cols-3 gap-2 items-center">
                     <div>
                       <p className="text-xs font-bold text-gray-500 dark:text-slate-500 uppercase mb-1">Grade</p>
@@ -156,7 +152,6 @@ const GPACalculator: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Desktop Layout */}
                 <div className="hidden md:grid grid-cols-12 gap-4 items-center p-4">
                   <div className="col-span-4">
                     <input
@@ -194,7 +189,7 @@ const GPACalculator: React.FC = () => {
                         onChange={(e) => updateCourse(course.id, { isWeighted: e.target.checked })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
                   <div className="col-span-1 flex justify-end">
@@ -212,7 +207,6 @@ const GPACalculator: React.FC = () => {
           </div>
         </div>
 
-        {/* GPA Result Footer */}
         <div className="p-4 md:p-6 bg-white dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left">
             <p className="text-gray-600 dark:text-slate-400 font-medium text-sm">Your Cumulative GPA</p>
