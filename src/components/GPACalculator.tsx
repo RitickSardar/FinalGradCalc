@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useDeferredValue } from 'react';
+import React, { useState, useMemo, useDeferredValue, useCallback } from 'react';
 
 interface Course {
   id: string;
@@ -34,9 +34,9 @@ const GPACalculator: React.FC = () => {
     }
   };
 
-  const updateCourse = (id: string, updates: Partial<Course>) => {
-    setCourses(courses.map(c => c.id === id ? { ...c, ...updates } : c));
-  };
+const updateCourse = useCallback((id: string, updates: Partial<Course>) => {
+  setCourses(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+}, []);
 
   // Math updated to use the deferred state
   const gpa = useMemo(() => {

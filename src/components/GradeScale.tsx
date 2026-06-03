@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo ,useCallback} from 'react';
 
 interface GradeEntry {
   letter: string;
@@ -75,13 +75,13 @@ const GradeScale: React.FC = () => {
     setScale((tab === 'college' ? COLLEGE_SCALE : HS_SCALE).map(entry => ({ ...entry })));
   };
 
-  const updateMinPercent = (index: number, val: number) => {
-    setScale(prev => prev.map((entry, i) => i === index ? { ...entry, minPercent: val } : entry));
-  };
+const updateMinPercent = useCallback((index: number, val: number) => {
+  setScale(prev => prev.map((entry, i) => i === index ? { ...entry, minPercent: val } : entry));
+}, []);
 
-  const updateGpa = (index: number, val: number) => {
-    setScale(prev => prev.map((entry, i) => i === index ? { ...entry, gpa: Math.min(5, Math.max(0, val)) } : entry));
-  };
+const updateGpa = useCallback((index: number, val: number) => {
+  setScale(prev => prev.map((entry, i) => i === index ? { ...entry, gpa: Math.min(5, Math.max(0, val)) } : entry));
+}, []);
 
   return (
     <div className="w-full max-w-4xl mx-auto p-3 md:p-6">
