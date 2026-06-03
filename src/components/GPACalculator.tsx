@@ -38,18 +38,16 @@ const GPACalculator: React.FC = () => {
   const gpa = useMemo(() => {
     let totalPoints = 0;
     let totalCredits = 0;
-
     courses.forEach(c => {
       const basePoints = GRADE_POINTS[c.grade] || 0;
       const weightedPoints = c.isWeighted ? Math.min(5.0, basePoints + 1.0) : basePoints;
       totalPoints += weightedPoints * c.credits;
       totalCredits += c.credits;
     });
-
     return totalCredits > 0 ? totalPoints / totalCredits : 0;
   }, [courses]);
 
-    const getGPALabel = (val: number) => {
+  const getGPALabel = (val: number) => {
     if (val >= 3.9) return "Summa Cum Laude";
     if (val >= 3.7) return "Magna Cum Laude";
     if (val >= 3.5) return "Cum Laude";
@@ -65,25 +63,30 @@ const GPACalculator: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 md:p-6">
+    <div className="w-full max-w-4xl mx-auto p-3 md:p-6">
       <div className="bg-white dark:bg-slate-900/50 backdrop-blur-xl rounded-3xl border border-gray-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+
+        {/* Header */}
         <div className="p-4 md:p-6 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900/30">
           <div>
-            <h2 className="text-2xl font-bold text-black dark:text-white">Cumulative GPA Calculator</h2>
-            <p className="text-gray-600 dark:text-slate-400 text-sm">Calculate your semester or overall GPA with weighted options</p>
+            <h2 className="text-xl md:text-2xl font-bold text-black dark:text-white">Cumulative GPA Calculator</h2>
+            <p className="text-gray-600 dark:text-slate-400 text-xs md:text-sm mt-0.5">Calculate your semester or overall GPA with weighted options</p>
           </div>
-          <button 
+          <button
             onClick={addCourse}
-            className="bg-blue-600 hover:bg-blue-500 text-black dark:text-white px-6 py-2 rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-3 md:px-6 py-2 rounded-xl font-bold transition-all shadow-lg shadow-blue-600/20 flex items-center gap-1 md:gap-2 shrink-0 ml-3"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            Add Course
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span className="hidden sm:inline">Add Course</span>
+            <span className="sm:hidden">Add</span>
           </button>
         </div>
 
-        <div className="p-4 md:p-6">
-          <div className="space-y-4">
-            {/* Table Header */}
+        {/* Course List */}
+        <div className="p-3 md:p-6">
+          <div className="space-y-3">
+
+            {/* Desktop Table Header — hidden on mobile */}
             <div className="hidden md:grid grid-cols-12 gap-4 px-4 text-xs font-bold text-gray-500 dark:text-slate-500 uppercase tracking-wider">
               <div className="col-span-4">Course Name</div>
               <div className="col-span-2 text-center">Grade</div>
@@ -92,78 +95,142 @@ const GPACalculator: React.FC = () => {
               <div className="col-span-1"></div>
             </div>
 
-            {/* Course Rows */}
             {courses.map((course) => (
-              <div key={course.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-gray-100 dark:bg-slate-800/30 p-4 rounded-2xl border border-gray-300 dark:border-slate-700/50 group transition-all hover:border-gray-400 dark:border-slate-600">
-                <div className="col-span-4">
-                  <input 
-                    type="text" 
-                    placeholder="e.g. Calculus I"
-                    value={course.name}
-                    onChange={(e) => updateCourse(course.id, { name: e.target.value })}
-                    className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2 text-black dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <select 
-                    value={course.grade}
-                    onChange={(e) => updateCourse(course.id, { grade: e.target.value })}
-                    className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2 text-black dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer"
-                  >
-                    {Object.keys(GRADE_POINTS).map(g => (
-                      <option key={g} value={g}>{g}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="col-span-2">
-                  <input 
-                    type="number" 
-                    value={course.credits}
-                    onChange={(e) => updateCourse(course.id, { credits: Math.max(0.5, Number(e.target.value)) })}
-                    className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2 text-black dark:text-white text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  />
-                </div>
-                <div className="col-span-3 flex justify-center">
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={course.isWeighted}
-                      onChange={(e) => updateCourse(course.id, { isWeighted: e.target.checked })}
-                      className="sr-only peer"
+              <div key={course.id} className="bg-gray-100 dark:bg-slate-800/30 rounded-2xl border border-gray-300 dark:border-slate-700/50 transition-all hover:border-gray-400 dark:hover:border-slate-600 overflow-hidden">
+
+                {/* Mobile Layout */}
+                <div className="md:hidden p-3">
+                  {/* Top row: name + delete */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      type="text"
+                      placeholder="e.g. Calculus I"
+                      value={course.name}
+                      onChange={(e) => updateCourse(course.id, { name: e.target.value })}
+                      className="flex-1 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2 text-black dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                     />
-                    <div className="w-11 h-6 bg-gray-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
+                    <button
+                      onClick={() => removeCourse(course.id)}
+                      className="text-gray-400 dark:text-slate-500 hover:text-red-400 transition-colors p-2 shrink-0"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </div>
+                  {/* Bottom row: grade + credits + weighted */}
+                  <div className="grid grid-cols-3 gap-2 items-center">
+                    <div>
+                      <p className="text-xs font-bold text-gray-500 dark:text-slate-500 uppercase mb-1">Grade</p>
+                      <select
+                        value={course.grade}
+                        onChange={(e) => updateCourse(course.id, { grade: e.target.value })}
+                        className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-2 py-2 text-black dark:text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer"
+                      >
+                        {Object.keys(GRADE_POINTS).map(g => (
+                          <option key={g} value={g}>{g}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-500 dark:text-slate-500 uppercase mb-1">Credits</p>
+                      <input
+                        type="number"
+                        value={course.credits}
+                        onChange={(e) => updateCourse(course.id, { credits: Math.max(0.5, Number(e.target.value)) })}
+                        className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-2 py-2 text-black dark:text-white text-sm text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-500 dark:text-slate-500 uppercase mb-1">AP/Honors</p>
+                      <div className="flex items-center justify-center h-[38px]">
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={course.isWeighted}
+                            onChange={(e) => updateCourse(course.id, { isWeighted: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-11 h-6 bg-gray-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="col-span-1 flex justify-end">
-                  <button 
-                    onClick={() => removeCourse(course.id)}
-                    className="text-gray-500 dark:text-slate-500 hover:text-red-400 transition-colors p-2"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                  </button>
+
+                {/* Desktop Layout */}
+                <div className="hidden md:grid grid-cols-12 gap-4 items-center p-4">
+                  <div className="col-span-4">
+                    <input
+                      type="text"
+                      placeholder="e.g. Calculus I"
+                      value={course.name}
+                      onChange={(e) => updateCourse(course.id, { name: e.target.value })}
+                      className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2 text-black dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <select
+                      value={course.grade}
+                      onChange={(e) => updateCourse(course.id, { grade: e.target.value })}
+                      className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2 text-black dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none cursor-pointer"
+                    >
+                      {Object.keys(GRADE_POINTS).map(g => (
+                        <option key={g} value={g}>{g}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <input
+                      type="number"
+                      value={course.credits}
+                      onChange={(e) => updateCourse(course.id, { credits: Math.max(0.5, Number(e.target.value)) })}
+                      className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl px-4 py-2 text-black dark:text-white text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    />
+                  </div>
+                  <div className="col-span-3 flex justify-center">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={course.isWeighted}
+                        onChange={(e) => updateCourse(course.id, { isWeighted: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                  <div className="col-span-1 flex justify-end">
+                    <button
+                      onClick={() => removeCourse(course.id)}
+                      className="text-gray-500 dark:text-slate-500 hover:text-red-400 transition-colors p-2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                  </div>
                 </div>
+
               </div>
             ))}
           </div>
         </div>
 
-        <div className="p-6 bg-white dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
+        {/* GPA Result Footer */}
+        <div className="p-4 md:p-6 bg-white dark:bg-slate-900/50 border-t border-gray-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left">
-            <p className="text-gray-600 dark:text-slate-400 font-medium">Your Cumulative GPA</p>
-            <h1 className={`text-7xl font-black ${getGPAColor(gpa)}`}>{gpa.toFixed(2)}</h1>
+            <p className="text-gray-600 dark:text-slate-400 font-medium text-sm">Your Cumulative GPA</p>
+            <h2 className={`text-6xl md:text-7xl font-black ${getGPAColor(gpa)}`}>{gpa.toFixed(2)}</h2>
             <span className={`text-sm font-bold ${getGPAColor(gpa)}`}>{getGPALabel(gpa)}</span>
           </div>
-          <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
-             <div className="bg-gray-100 dark:bg-slate-800/50 p-4 rounded-2xl border border-gray-300 dark:border-slate-700 text-center">
-                <p className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold">Total Credits</p>
-                <p className="text-2xl font-bold text-black dark:text-white">{courses.reduce((acc, c) => acc + c.credits, 0)}</p>
-             </div>
-             <div className="bg-gray-100 dark:bg-slate-800/50 p-4 rounded-2xl border border-gray-300 dark:border-slate-700 text-center">
-                <p className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold">Courses</p>
-                <p className="text-2xl font-bold text-black dark:text-white">{courses.length}</p>
-             </div>
+          <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
+            <div className="bg-gray-100 dark:bg-slate-800/50 p-4 rounded-2xl border border-gray-300 dark:border-slate-700 text-center">
+              <p className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold">Total Credits</p>
+              <p className="text-2xl font-bold text-black dark:text-white">{courses.reduce((acc, c) => acc + c.credits, 0)}</p>
+            </div>
+            <div className="bg-gray-100 dark:bg-slate-800/50 p-4 rounded-2xl border border-gray-300 dark:border-slate-700 text-center">
+              <p className="text-xs text-gray-500 dark:text-slate-500 uppercase font-bold">Courses</p>
+              <p className="text-2xl font-bold text-black dark:text-white">{courses.length}</p>
+            </div>
           </div>
         </div>
+
       </div>
     </div>
   );
