@@ -88,25 +88,25 @@ const Calculator: React.FC = () => {
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wider ml-1">Points Earned</label>
+                <label htmlFor="currentScore" className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wider ml-1">Points Earned</label>
                 <div className="relative group">
-                  <input type="number" value={currentScore} onChange={(e) => setCurrentScore(e.target.value ? Number(e.target.value) : '')} className="w-full bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-black dark:text-white text-lg font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder-slate-600" placeholder="e.g. 85" />
+                  <input id="currentScore" type="number" value={currentScore} onChange={(e) => setCurrentScore(e.target.value ? Number(e.target.value) : '')} className="w-full bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-black dark:text-white text-lg font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder-slate-600" placeholder="e.g. 85" />
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wider ml-1">Total Possible</label>
-                <input type="number" value={totalPoints} onChange={(e) => setTotalPoints(e.target.value ? Number(e.target.value) : '')} className="w-full bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-black dark:text-white text-lg font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder-slate-600" placeholder="e.g. 100" />
+                <label htmlFor="totalPoints" className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wider ml-1">Total Possible</label>
+                <input id="totalPoints" type="number" value={totalPoints} onChange={(e) => setTotalPoints(e.target.value ? Number(e.target.value) : '')} className="w-full bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-black dark:text-white text-lg font-medium focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder-slate-600" placeholder="e.g. 100" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wider ml-1">Final Weight (%)</label>
-                <input type="number" value={finalWeight} onChange={(e) => setFinalWeight(e.target.value ? Math.min(100, Math.max(0, Number(e.target.value))) : '')}className="w-full bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-black dark:text-white text-lg font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder-slate-600" placeholder="20" />
+                <label htmlFor="finalWeight" className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wider ml-1">Final Weight (%)</label>
+                <input id="finalWeight" type="number" value={finalWeight} onChange={(e) => setFinalWeight(e.target.value ? Math.min(100, Math.max(0, Number(e.target.value))) : '')}className="w-full bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-black dark:text-white text-lg font-medium focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition-all placeholder-slate-600" placeholder="20" />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wider ml-1">Target Grade (%)</label>
-                <input type="number" value={targetGrade} onChange={(e) => setTargetGrade(e.target.value ? Number(e.target.value) : '')} className="w-full bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-black dark:text-white text-lg font-medium focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all placeholder-slate-600" placeholder="90" />
+                <label htmlFor="targetGrade" className="text-xs font-semibold text-gray-600 dark:text-slate-400 uppercase tracking-wider ml-1">Target Grade (%)</label>
+                <input id="targetGrade" type="number" value={targetGrade} onChange={(e) => setTargetGrade(e.target.value ? Number(e.target.value) : '')} className="w-full bg-gray-50 dark:bg-slate-950/50 border border-gray-200 dark:border-slate-800 rounded-2xl px-5 py-4 text-black dark:text-white text-lg font-medium focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all placeholder-slate-600" placeholder="90" />
               </div>
             </div>
           </div>
@@ -120,17 +120,17 @@ const Calculator: React.FC = () => {
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
               <div className="space-y-1.5 sm:col-span-1">
-                <label className="text-[11px] font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider ml-1 block">Extra Credit (+)</label>
-                <input type="number" value={extraCredit} onChange={(e) => setExtraCredit(e.target.value ? Number(e.target.value) : '')} placeholder="0 pts" className="w-full bg-gray-50 dark:bg-slate-950/30 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-black dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all text-sm h-[42px]" />
+                <label htmlFor="extraCredit" className="text-[11px] font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider ml-1 block">Extra Credit (+)</label>
+                <input id="extraCredit" type="number" value={extraCredit} onChange={(e) => setExtraCredit(e.target.value ? Number(e.target.value) : '')} placeholder="0 pts" className="w-full bg-gray-50 dark:bg-slate-950/30 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-black dark:text-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all text-sm h-[42px]" />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <label className="text-[11px] font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider ml-1 block">
+                <label htmlFor="dropEarned" className="text-[11px] font-semibold text-gray-500 dark:text-slate-500 uppercase tracking-wider ml-1 block">
                   Drop Lowest (Earned / Total)
                 </label>
                 <div className="flex items-center gap-2">
-                  <input type="number" value={dropEarned} onChange={(e) => setDropEarned(e.target.value ? Number(e.target.value) : '')} placeholder="Earned pts" className="w-full bg-gray-50 dark:bg-slate-950/30 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-black dark:text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all text-sm h-[42px]" />
+                  <input id="dropEarned" type="number" value={dropEarned} onChange={(e) => setDropEarned(e.target.value ? Number(e.target.value) : '')} placeholder="Earned pts" className="w-full bg-gray-50 dark:bg-slate-950/30 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-black dark:text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all text-sm h-[42px]" />
                   <span className="text-gray-400 dark:text-slate-600 font-light text-xl leading-none">/</span>
-                  <input type="number" value={dropTotal} onChange={(e) => setDropTotal(e.target.value ? Number(e.target.value) : '')} placeholder="Total pts" className="w-full bg-gray-50 dark:bg-slate-950/30 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-black dark:text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all text-sm h-[42px]" />
+                  <input id="dropTotal" aria-label="Drop lowest total points" type="number" value={dropTotal} onChange={(e) => setDropTotal(e.target.value ? Number(e.target.value) : '')} placeholder="Total pts" className="w-full bg-gray-50 dark:bg-slate-950/30 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-black dark:text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all text-sm h-[42px]" />
                 </div>
               </div>
             </div>
@@ -142,17 +142,17 @@ const Calculator: React.FC = () => {
           
           {/* The "Reverse Calculator" Hero Card */}
           <div className="bg-gradient-to-br from-indigo-600 via-blue-600 to-blue-500 p-8 rounded-3xl shadow-[0_20px_40px_-15px_rgba(37,99,235,0.3)] text-black dark:text-white relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+
             <div className="relative z-10 flex flex-col items-center text-center">
               <p className="text-blue-100/90 font-medium tracking-wide text-sm mb-2 uppercase">To achieve your target</p>
               <div className="flex items-baseline gap-2 mb-1">
-                <h1 className="text-7xl font-black tracking-tighter">
+                <h2 className="text-7xl font-black tracking-tighter">
                   {requiredFinal > 150 
                 ? 'N/A' 
                 : requiredFinal < 0 
                     ? '0 — Already Passing!' 
                     : requiredFinal.toFixed(1)}<span className="text-4xl text-blue-200">%</span>
-                </h1>
+                </h2>
               </div>
               <p className="text-blue-200/80 text-sm mt-3 bg-white/10 px-4 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
                 Required Final Exam Score
@@ -195,6 +195,7 @@ const Calculator: React.FC = () => {
             
             <div className="relative pt-2 pb-4">
               <input 
+                aria-label="What-if exam score"
                 type="range" min="0" max="110" step="1" value={whatIfScore} 
                 onChange={(e) => setWhatIfScore(Number(e.target.value))}
                 className="w-full h-2 bg-gray-100 dark:bg-slate-800 rounded-lg appearance-none custom-slider outline-none"
