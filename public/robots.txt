@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://passmyfinals.com/sitemap-index.xml
