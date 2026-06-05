@@ -1,14 +1,22 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import ToolsApp from '../../components/tools/ToolsApp';
+
+export function getStaticPaths() {
+  return [
+    { params: { path: undefined } },
+    { params: { path: 'mindmap' } },
+    { params: { path: 'settings' } }
+  ];
+}
 ---
 
 <Layout title="AI Tools - PassMyFinals" description="Experimental AI tools to help you study better. Mind map generator, study planners, and more.">
   <div class="max-w-7xl mx-auto px-4 py-8">
     <div class="mb-8">
       <h1 class="text-4xl font-black tracking-tight text-black dark:text-white mb-2">Study <span class="text-blue-600">Tools</span></h1>
-      <p class="text-gray-600 dark:text-gray-400">Boost your productivity with AI-powered study aids.</p>
-    </div>
+      <p class="text-gray-600 dark:text-gray-400">Boost your productivity with AI-powered study aids.</p>    
+    </div>        
     
     <div class="bg-white/50 dark:bg-slate-900/50 rounded-3xl border border-gray-200 dark:border-slate-800 overflow-hidden backdrop-blur-md">
       <ToolsApp client:only="react" />
