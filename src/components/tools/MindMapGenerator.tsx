@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import ReactFlow, { 
-  Background, 
-  Controls, 
-  MiniMap, 
-  useNodesState, 
+import { 
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  useNodesState,
   useEdgesState,
   addEdge,
   Panel,
@@ -12,19 +13,31 @@ import ReactFlow, {
   useReactFlow,
   ReactFlowProvider,
   getNodesBounds
-} from 'reactflow';
-import type { Connection, Edge, Node } from 'reactflow';
-import 'reactflow/dist/style.css';
+} from '@xyflow/react';
+import type { Connection, Edge, Node } from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { GoogleGenAI } from '@google/genai';
 import dagre from 'dagre';
 import { toPng } from 'html-to-image';
+import jsPDF from 'jspdf';
+
+interface MindMapNodeData extends Record<string, unknown> {
+  label: string;
+  description?: string;
+  isRoot?: boolean;
+  color?: string;
+  nodeStyle?: 'filled' | 'bordered';
+  globalStyle?: 'filled' | 'bordered';
+  globalFontSize?: number;
+}
+
+type MindMapNode = Node<MindMapNodeData>;
 
 // --- CUSTOM LAYOUT ENGINE ---
-const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
+const getLayoutedElements = (nodes: MindMapNode[], edges: Edge[], direction = 'TB', spacing = 1) => {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
-  
-  dagreGraph.setGraph({ rankdir: direction, nodesep: 150, ranksep: 200 });
+  dagreGraph.setGraph({ rankdir: direction, nodesep: 150 * spacing, ranksep: 200 * spacing });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: 220, height: 80 });
@@ -50,7 +63,7 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
   return { nodes: layoutedNodes, edges };
 };
 
-const getRadialLayout = (nodes: Node[], edges: Edge[]) => {
+const getRadialLayout = (nodes: MindMapNode[], edges: Edge[], spacing = 1) => {
   if (nodes.length === 0) return { nodes, edges };
 
   const incomingEdges = new Set(edges.map(e => e.target));
@@ -58,7 +71,7 @@ const getRadialLayout = (nodes: Node[], edges: Edge[]) => {
 
   const layoutedNodes = [...nodes];
   const childrenMap = new Map<string, string[]>();
-  
+
   edges.forEach(e => {
     if (!childrenMap.has(e.source)) childrenMap.set(e.source, []);
     childrenMap.get(e.source)!.push(e.target);
@@ -66,7 +79,7 @@ const getRadialLayout = (nodes: Node[], edges: Edge[]) => {
 
   const depths = new Map<string, number>();
   const queue = [{ id: rootNode.id, depth: 0 }];
-  
+
   while (queue.length > 0) {
     const { id, depth } = queue.shift()!;
     depths.set(id, depth);
@@ -74,21 +87,21 @@ const getRadialLayout = (nodes: Node[], edges: Edge[]) => {
     children.forEach(child => queue.push({ id: child, depth: depth + 1 }));
   }
 
-  const layerRadius = 350;
-  
+  const layerRadius = 350 * spacing;
+
   layoutedNodes.forEach(node => {
     if (node.id === rootNode.id) {
       node.position = { x: 0, y: 0 };
       return;
     }
-    
+
     const depth = depths.get(node.id) || 1;
     const nodesAtDepth = layoutedNodes.filter(n => depths.get(n.id) === depth);
     const index = nodesAtDepth.findIndex(n => n.id === node.id);
-    
+
     const angle = (index / nodesAtDepth.length) * 2 * Math.PI;
     const radius = depth * layerRadius;
-    
+
     node.position = {
       x: radius * Math.cos(angle) - 110,
       y: radius * Math.sin(angle) - 40,
@@ -98,38 +111,54 @@ const getRadialLayout = (nodes: Node[], edges: Edge[]) => {
   return { nodes: layoutedNodes, edges };
 };
 
-// --- CUSTOM NODE WITH COLOR SUPPORT ---
+// --- CUSTOM NODE ---
 const CustomNode = ({ data, selected }: any) => {
   const [isPinnedOpen, setIsPinnedOpen] = useState(false);
-  const bg = data.color || (data.isRoot ? '#3b82f6' : '#ffffff');
-  const textColor = data.isRoot ? '#ffffff' : '#000000';
-  
+
+  const styleMode = data.nodeStyle || data.globalStyle || 'filled';
+  const isFilled = styleMode === 'filled';
+
+  const baseColor = data.color || (data.isRoot ? '#3b82f6' : '#ffffff');
+
+  const nodeBg = isFilled ? baseColor : undefined;
+  const nodeBorder = isFilled ? 'transparent' : baseColor;
+  const textColor = isFilled ? (data.isRoot ? '#ffffff' : '#000000') : 'inherit';
+  const fontSize = data.globalFontSize || 14;
+
   const showDescription = selected || isPinnedOpen;
-  
+
   return (
-    <div className={`group px-4 py-3 rounded-xl border-2 transition-all duration-300 min-w-[200px] max-w-[280px] shadow-lg relative ${showDescription ? 'z-40' : ''} ${selected ? 'border-blue-500 shadow-blue-500/30 scale-110 z-50' : 'border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-slate-500'}`} style={{ backgroundColor: bg, color: textColor }}>
+    <div
+      className={`group px-4 py-3 rounded-xl border-[3px] transition-all duration-300 min-w-[200px] max-w-[280px] shadow-lg relative ${showDescription ? 'z-40' : ''} ${selected ? (isFilled ? 'border-blue-500 shadow-blue-500/30 scale-110 z-50' : 'ring-4 ring-blue-500/50 shadow-blue-500/30 scale-110 z-50') : 'hover:scale-105'} ${isFilled ? '' : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+      style={{ backgroundColor: nodeBg, color: textColor, borderColor: nodeBorder }}
+    >
       <Handle type="target" position={Position.Top} className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
-      
+
       <div className="flex flex-col gap-1.5">
-        <div className="font-bold text-sm break-words text-center flex items-center justify-center gap-2 relative">
+        <div className="font-bold break-words text-center flex items-center justify-center gap-2 relative" style={{ fontSize: `${fontSize}px` }}>
           <span className="flex-1 px-4">{data.label}</span>
-          {data.description && (
-            <button 
-              onClick={(e) => { e.stopPropagation(); setIsPinnedOpen(!isPinnedOpen); }}
-              className={`absolute right-0 focus:outline-none p-1 rounded-full transition-all ${isPinnedOpen ? 'bg-black/10 dark:bg-white/10' : 'opacity-50 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5'}`}
-              title="Toggle Description"
-            >
-              <svg className={`w-4 h-4 transition-transform ${showDescription ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </button>
-          )}
         </div>
-        
+
         {data.description && showDescription && (
-          <div className="text-xs opacity-90 leading-relaxed border-t border-black/10 dark:border-white/10 pt-2 mt-1 text-left break-words animate-in fade-in slide-in-from-top-2 duration-300">
+          <div
+            className="opacity-90 leading-relaxed border-t border-black/10 dark:border-white/10 pt-2 mt-1 text-left break-words animate-in fade-in slide-in-from-top-2 duration-300 pb-2"
+            style={{ fontSize: `${Math.max(10, fontSize * 0.85)}px` }}
+          >
             {data.description}
           </div>
         )}
       </div>
+
+      {data.description && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setIsPinnedOpen(!isPinnedOpen); }}
+          className={`absolute bottom-1.5 right-1.5 focus:outline-none flex items-center justify-center w-5 h-5 rounded-full transition-all border hover:scale-110 z-50 ${isPinnedOpen ? 'bg-green-500 border-green-600 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-white dark:bg-slate-800 border-slate-400 dark:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm'}`}
+          title={isPinnedOpen ? "Unpin Description" : "Pin Description"}
+          aria-label="Toggle node description"
+        >
+          <div className={`w-2 h-2 rounded-full transition-colors ${isPinnedOpen ? 'bg-white' : 'bg-slate-500 dark:bg-slate-400'}`}></div>
+        </button>
+      )}
 
       <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
     </div>
@@ -145,21 +174,65 @@ const GeneratorContent: React.FC = () => {
     }
     return '';
   });
-  
+
   const [topic, setTopic] = useState('');
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [layout, setLayout] = useState<'TB' | 'LR' | 'BT' | 'RADIAL'>('TB');
   const [selectedColor, setSelectedColor] = useState('#ffffff');
-  
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [isDark, setIsDark] = useState(false);
+
+  const [globalNodeStyle, setGlobalNodeStyle] = useState<'filled' | 'bordered'>('filled');
+  const [activePanelTab, setActivePanelTab] = useState<'overview' | 'node'>('overview');
+  const [nodeSpacing, setNodeSpacing] = useState<number>(1);
+  const [globalFontSize, setGlobalFontSize] = useState<number>(14);
+
+  const [openOverviewSections, setOpenOverviewSections] = useState({
+    mode: false,
+    adjustments: false,
+    layout: false,
+    actions: false,
+  });
+
+  const toggleOverviewSection = (section: keyof typeof openOverviewSections) => {
+    setOpenOverviewSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<MindMapNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [isToolbarOpen, setIsToolbarOpen] = useState(false);
-  
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Store generated data separately to avoid layout useEffect loop
+  const generatedData = useRef<{ nodes: MindMapNode[], edges: Edge[] } | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  
+
   const { fitView, getNodes } = useReactFlow();
+
+  // Observe dark mode changes properly
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    setIsDark(document.documentElement.classList.contains('dark'));
+    return () => observer.disconnect();
+  }, []);
+
+  const selectedNode = nodes.find(n => n.selected) as MindMapNode | undefined;
+
+  useEffect(() => {
+    if (selectedNode && activePanelTab !== 'node') {
+      setActivePanelTab('node');
+    } else if (!selectedNode && activePanelTab === 'node') {
+      setActivePanelTab('overview');
+    }
+  }, [selectedNode?.id]);
+
+  useEffect(() => {
+    setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, globalStyle: globalNodeStyle, globalFontSize } })));
+  }, [globalNodeStyle, globalFontSize, setNodes]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -184,33 +257,33 @@ const GeneratorContent: React.FC = () => {
     [setEdges]
   );
 
-  const applyLayout = useCallback((nodesToLayout: Node[], edgesToLayout: Edge[], direction: string) => {
+  const applyLayout = useCallback((nodesToLayout: MindMapNode[], edgesToLayout: Edge[], direction: string, spacing: number) => {
     let layouted;
     if (direction === 'RADIAL') {
-      layouted = getRadialLayout(nodesToLayout, edgesToLayout);
+      layouted = getRadialLayout(nodesToLayout, edgesToLayout, spacing);
     } else {
-      layouted = getLayoutedElements(nodesToLayout, edgesToLayout, direction);
+      layouted = getLayoutedElements(nodesToLayout, edgesToLayout, direction, spacing);
     }
     setNodes([...layouted.nodes]);
     setEdges([...layouted.edges]);
-    
+
     setTimeout(() => {
       fitView({ duration: 800, padding: 0.2 });
     }, 50);
   }, [setNodes, setEdges, fitView]);
 
+  // Only re-layout when layout direction or spacing changes, using stored generated data
   useEffect(() => {
-    if (nodes.length > 0) {
-      applyLayout(nodes, edges, layout);
+    if (generatedData.current) {
+      applyLayout(generatedData.current.nodes, generatedData.current.edges, layout, nodeSpacing);
     }
-  }, [layout]);
+  }, [layout, nodeSpacing, applyLayout]);
 
   const generateMindMap = async () => {
     if (!apiKey) {
       setError('Please set your Gemini API Key first.');
       return;
     }
-
     if (!topic.trim()) {
       setError('Please enter a topic.');
       return;
@@ -221,11 +294,8 @@ const GeneratorContent: React.FC = () => {
 
     const runGeneration = async (modelName: string) => {
       const apiProxy = localStorage.getItem('gemini_api_proxy') || '';
-      
       const config: any = { apiKey: apiKey };
-      if (apiProxy) {
-        config.baseUrl = apiProxy;
-      }
+      if (apiProxy) config.baseUrl = apiProxy;
 
       const ai = new GoogleGenAI(config);
       const prompt = `Act as an expert system architect. Break down the topic "${topic}" into a deep hierarchical mind map. You must return ONLY a raw JSON object with two arrays: nodes and edges.
@@ -233,7 +303,7 @@ const GeneratorContent: React.FC = () => {
       Level 1: The Root topic.
       Level 2: The Core Concepts branching off the root.
       Level 3: Grandchildren nodes that branch off Level 2, providing specific examples, definitions, or detailed explanations of those core concepts.
-      Nodes need: { "id": "unique_string", "data": { "label": "Concept Name", "description": "Brief 1-2 sentence description" } }
+      Nodes need: { "id": "unique_string", "data": { "label": "Concept Name", "description": "Brief 1-2 sentence description" } } 
       Edges need: { "id": "unique_string", "source": "parent_id", "target": "child_id" }
       The first node in the array MUST be the root concept.
       Return absolutely no markdown, no backticks, and no conversational text. Just the parsable JSON.`;
@@ -249,42 +319,32 @@ const GeneratorContent: React.FC = () => {
       let text = '';
       let success = false;
       let lastErr: any = null;
-      
-      // Future-proof cascade: Try version 3, then 2.5, 2.0, and finally 1.5
-      const modelsToTry = ['gemini-3.0-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-      
+
+      const modelsToTry = ['gemini-3.5-flash', 'gemini-3-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+
       for (const model of modelsToTry) {
         try {
           console.log(`Attempting generation with model: ${model}...`);
           text = await runGeneration(model);
           success = true;
-          break; // Exit loop on success
+          break;
         } catch (err: any) {
           lastErr = err;
           const errMsg = err.message || '';
-          
-          // If the API key is strictly invalid or unauthorized, stop immediately. 
-          // Do not waste time falling back.
           if (errMsg.includes('401') || errMsg.includes('API_KEY_INVALID') || errMsg.includes('403')) {
             throw err;
           }
-          
-          // If the error is 404 (model doesn't exist yet) or 503 (high demand), 
-          // log it and let the loop continue to the next model.
-          console.warn(`${model} failed (${errMsg}). Falling back to next model...`);
+          console.warn(`${model} failed (${errMsg}). Falling back...`);
         }
       }
 
-      // If all models in the array failed
-      if (!success) {
-        throw lastErr || new Error("All model fallbacks failed.");
-      }
-      
+      if (!success) throw lastErr || new Error("All model fallbacks failed.");
+
       const cleanJson = text.replace(/```json/gi, '').replace(/```/g, '').trim();
       let data;
       try {
         data = JSON.parse(cleanJson);
-      } catch (parseErr) {
+      } catch {
         throw new Error("JSON_PARSE_ERROR");
       }
 
@@ -301,28 +361,29 @@ const GeneratorContent: React.FC = () => {
 
         const majorBranches = adjList.get(rootId) || [];
         const branchColors = ['#fecaca', '#fde047', '#a7f3d0', '#bfdbfe', '#e9d5ff', '#fbcfe8', '#fdba74'];
-        
+
         majorBranches.forEach((branchId, index) => {
           const color = branchColors[index % branchColors.length];
-          const queue = [branchId];
-          while(queue.length > 0) {
-            const current = queue.shift()!;
+          const bfsQueue = [branchId];
+          while (bfsQueue.length > 0) {
+            const current = bfsQueue.shift()!;
             if (!nodeColors.has(current)) {
               nodeColors.set(current, color);
               const children = adjList.get(current) || [];
-              queue.push(...children);
+              bfsQueue.push(...children);
             }
           }
         });
 
-        const mappedNodes: Node[] = data.nodes.map((node: any) => ({
+        const mappedNodes: MindMapNode[] = data.nodes.map((node: any) => ({
           ...node,
           type: 'custom',
           position: { x: 0, y: 0 },
-          data: { 
+          data: {
             ...node.data,
             isRoot: node.id === rootId,
-            color: nodeColors.get(node.id) || '#ffffff'
+            color: nodeColors.get(node.id) || '#ffffff',
+            globalStyle: globalNodeStyle
           }
         }));
 
@@ -336,7 +397,9 @@ const GeneratorContent: React.FC = () => {
           };
         });
 
-        applyLayout(mappedNodes, mappedEdges, layout);
+        // Store for layout switching
+        generatedData.current = { nodes: mappedNodes, edges: mappedEdges };
+        applyLayout(mappedNodes, mappedEdges, layout, nodeSpacing);
 
       } else {
         throw new Error('Invalid JSON structure returned');
@@ -362,66 +425,69 @@ const GeneratorContent: React.FC = () => {
       setApiKey(key.trim());
     }
   };
-const applyColorToSelected = (color: string) => {
-  setSelectedColor(color);
-  setNodes((nds) => 
-    nds.map((n) => {
-      if (n.selected && !n.data.isRoot) {
-        return { ...n, data: { ...n.data, color } };
-      }
-      return n;
-    })
-  );
-};
 
-const updateNodeData = (id: string, field: 'label' | 'description', value: string) => {
-  setNodes((nds) =>
-    nds.map((n) => {
-      if (n.id === id) {
-        return { ...n, data: { ...n.data, [field]: value } };
-      }
-      return n;
-    })
-  );
-};
-
-const handleAddChild = (parentId: string, parentColor: string) => {
-  const newNodeId = `node_${Date.now()}`;
-  const newNode: Node = {
-    id: newNodeId,
-    type: 'custom',
-    position: { x: 0, y: 0 },
-    data: { 
-      label: 'New Concept', 
-      description: 'Edit this description.', 
-      color: parentColor || '#ffffff',
-      isRoot: false
-    }
+  const applyColorToSelected = (color: string) => {
+    setSelectedColor(color);
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.selected && !n.data.isRoot) {
+          return { ...n, data: { ...n.data, color } };
+        }
+        return n;
+      })
+    );
   };
 
-  const newEdge: Edge = {
-    id: `edge_${parentId}_${newNodeId}`,
-    source: parentId,
-    target: newNodeId,
-    type: 'default',
-    animated: true,
-    style: { stroke: parentColor || '#94a3b8', strokeWidth: 3 }
+  const updateNodeData = (id: string, field: 'label' | 'description' | 'color' | 'nodeStyle', value: string | undefined) => {     
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.id === id) {
+          return { ...n, data: { ...n.data, [field]: value } };
+        }
+        return n;
+      })
+    );
   };
 
-  const updatedNodes = [...nodes, newNode];
-  const updatedEdges = [...edges, newEdge];
-  applyLayout(updatedNodes, updatedEdges, layout);
-};
+  const handleAddChild = (parentId: string, parentColor: string) => {
+    const newNodeId = `node_${Date.now()}`;
+    const newNode: MindMapNode = {
+      id: newNodeId,
+      type: 'custom',
+      position: { x: 0, y: 0 },
+      data: {
+        label: 'New Concept',
+        description: 'Edit this description.',
+        color: parentColor || '#ffffff',
+        isRoot: false,
+        globalStyle: globalNodeStyle
+      }
+    };
 
-const handleDeleteNode = (nodeId: string) => {
-  // Delete the node and any edges connected to it
-  const updatedNodes = nodes.filter(n => n.id !== nodeId);
-  const updatedEdges = edges.filter(e => e.source !== nodeId && e.target !== nodeId);
-  applyLayout(updatedNodes, updatedEdges, layout);
-};
+    const newEdge: Edge = {
+      id: `edge_${parentId}_${newNodeId}`,
+      source: parentId,
+      target: newNodeId,
+      type: 'default',
+      animated: true,
+      style: { stroke: parentColor || '#94a3b8', strokeWidth: 3 }
+    };
 
-const exportDataJSON = () => {
-  if (nodes.length === 0) {
+    const updatedNodes = [...nodes, newNode] as MindMapNode[];
+    const updatedEdges = [...edges, newEdge];
+    generatedData.current = { nodes: updatedNodes, edges: updatedEdges };
+    applyLayout(updatedNodes, updatedEdges, layout, nodeSpacing);
+  };
+
+  const handleDeleteNode = (nodeId: string) => {
+    const updatedNodes = nodes.filter(n => n.id !== nodeId) as MindMapNode[];
+    const updatedEdges = edges.filter(e => e.source !== nodeId && e.target !== nodeId);
+    generatedData.current = { nodes: updatedNodes, edges: updatedEdges };
+    applyLayout(updatedNodes, updatedEdges, layout, nodeSpacing);
+  };
+
+  const exportDataJSON = () => {
+    if (nodes.length === 0) {
       setError("Cannot save an empty map. Generate or load one first.");
       return;
     }
@@ -429,51 +495,75 @@ const exportDataJSON = () => {
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute("download", `${topic.replace(/\s+/g, '-').toLowerCase() || 'mindmap'}.json`);
-    document.body.appendChild(downloadAnchorNode); 
+    document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
   };
 
-  const exportImagePNG = () => {
+  // --- FIXED EXPORT ENGINE ---
+  const exportPDF = async () => {
     if (nodes.length === 0) {
-      setError("Cannot save an empty map.");
+      setError("Cannot export an empty map.");
       return;
     }
 
-    const flowElement = document.querySelector('.react-flow') as HTMLElement;
-    if (!flowElement) return;
+    const viewportElement = document.querySelector('.xyflow__viewport') || document.querySelector('.react-flow__viewport');
+    if (!viewportElement) return;
 
-    const nodesBounds = getNodesBounds(getNodes());
+    setExporting(true);
 
-    const controls = document.querySelector('.react-flow__controls') as HTMLElement;
-    const minimap = document.querySelector('.react-flow__minimap') as HTMLElement;
-    const panel = document.querySelector('.react-flow__panel') as HTMLElement;
-    if (controls) controls.style.display = 'none';
-    if (minimap) minimap.style.display = 'none';
-    if (panel) panel.style.display = 'none';
+    try {
+      // Allow React to flush the "Exporting..." state to the UI
+      await new Promise(resolve => setTimeout(resolve, 50));
 
-    toPng(flowElement, {
-      backgroundColor: document.documentElement.classList.contains('dark') ? '#0f172a' : '#f8fafc',
-      width: nodesBounds.width + 400,
-      height: nodesBounds.height + 400,
-      style: {
-        width: `${nodesBounds.width + 400}px`,
-        height: `${nodesBounds.height + 400}px`,
-        transform: `translate(${-nodesBounds.x + 200}px, ${-nodesBounds.y + 200}px)`,
-      },
-    })
-      .then((dataUrl) => {
-        const a = document.createElement('a');
-        a.setAttribute('download', `${topic.replace(/\s+/g, '-').toLowerCase() || 'mindmap'}.png`);
-        a.setAttribute('href', dataUrl);
-        a.click();
-      })
-      .catch(err => console.error(err))
-      .finally(() => {
-        if (controls) controls.style.display = '';
-        if (minimap) minimap.style.display = '';
-        if (panel) panel.style.display = '';
+      const nodesBounds = getNodesBounds(getNodes());
+      const padding = 80;
+      const contentWidth = nodesBounds.width + padding * 2;
+      const contentHeight = nodesBounds.height + padding * 2;
+      const scale = 2; // Reduced from 3 to 2 to prevent memory crashes on large maps while maintaining crispness
+
+      const transformX = -nodesBounds.x + padding;
+      const transformY = -nodesBounds.y + padding;
+
+      const dataUrl = await toPng(viewportElement as HTMLElement, {
+        backgroundColor: isDark ? '#0f172a' : '#f8fafc',
+        width: contentWidth,
+        height: contentHeight,
+        pixelRatio: scale,
+        style: {
+          width: `${contentWidth}px`,
+          height: `${contentHeight}px`,
+          transform: `translate(${transformX}px, ${transformY}px) scale(1)`,
+          transformOrigin: 'top left'
+        }
       });
+
+      // A3 landscape layout for more breathing room
+      const pdf = new jsPDF({
+        orientation: contentWidth > contentHeight ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [contentWidth, contentHeight],
+        compress: true,
+      });
+
+      // Meta Data and Title Injection
+      pdf.setFontSize(18);
+      pdf.setTextColor(isDark ? 255 : 30);
+      pdf.text(topic || 'Mind Map', padding, padding - 20);
+      pdf.addImage(dataUrl, 'PNG', 0, 0, contentWidth, contentHeight, '', 'FAST');
+
+      pdf.setProperties({
+        title: topic || 'Mind Map',
+        creator: 'Mind Map Generator',
+      });
+
+      pdf.save(`${topic.replace(/\s+/g, '-').toLowerCase() || 'mindmap'}.pdf`);
+    } catch (err) {
+      console.error('PDF export error:', err);
+      setError('Failed to export PDF. Try again.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -486,10 +576,11 @@ const exportDataJSON = () => {
         if (data.nodes && data.edges) {
           setNodes(data.nodes);
           setEdges(data.edges);
+          generatedData.current = { nodes: data.nodes, edges: data.edges };
           if (data.topic) setTopic(data.topic);
           setTimeout(() => fitView({ duration: 800 }), 50);
         }
-      } catch (err) {
+      } catch {
         setError("Failed to parse the file.");
       }
     };
@@ -519,13 +610,16 @@ const exportDataJSON = () => {
             </div>
             <div className="flex gap-4 items-start">
               <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 flex items-center justify-center font-bold shrink-0 mt-0.5">3</div>
-              <p className="font-semibold text-black dark:text-white text-sm">Paste it below. Stored securely in your browser.</p>
+              <p className="font-semibold text-black dark:text-white text-sm">Paste it below. Stored locally in your browser only.</p>
             </div>
           </div>
           <form onSubmit={saveLocalKey} className="flex gap-3 flex-col sm:flex-row">
             <input type="password" name="apiKey" required className="flex-1 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-black dark:text-white focus:border-blue-500 outline-none transition-all placeholder:text-gray-400" placeholder="AIzaSy..." />
             <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-blue-600/20 whitespace-nowrap">Save Key & Continue</button>
           </form>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-3">
+            ⚠️ Stored locally in your browser. Never share this device with untrusted users.
+          </p>
         </div>
       </div>
     );
@@ -538,21 +632,26 @@ const exportDataJSON = () => {
           <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="What do you want to learn?" className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-black dark:text-white outline-none focus:border-blue-500 shadow-sm" onKeyDown={(e) => e.key === 'Enter' && generateMindMap()} />
         </div>
         <button onClick={generateMindMap} disabled={loading} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-          {loading ? "Generating..." : 'Generate Map'}
+          {loading ? (
+            <>
+              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+              Generating...
+            </>
+          ) : 'Generate Map'}
         </button>
       </div>
 
       {error && (
         <div className="bg-red-500/10 border-l-4 border-red-500 text-red-700 dark:text-red-400 p-4 m-4 rounded-r-xl text-sm flex justify-between items-start">
           <p className="font-medium">{error}</p>
-          <button onClick={() => setError(null)} className="font-bold text-lg hover:text-red-900 ml-4">&times;</button>
+          <button onClick={() => setError(null)} aria-label="Dismiss error" className="font-bold text-lg hover:text-red-900 ml-4">&times;</button>
         </div>
       )}
 
       {nodes.length === 0 && !loading && !error && (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500 dark:text-gray-400">
+        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500 dark:text-gray-400">       
           <div className="w-20 h-20 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4 text-blue-500">
-            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>    
           </div>
           <h3 className="text-xl font-bold text-black dark:text-white mb-2">Ready to Map</h3>
           <p className="text-md max-w-md mb-6">Enter a topic above or load a saved file.</p>
@@ -566,88 +665,225 @@ const exportDataJSON = () => {
 
       {nodes.length > 0 && (
         <div ref={reactFlowWrapper} className={`flex-1 relative bg-gray-50 dark:bg-black/20 ${isFullscreen ? 'bg-slate-50 dark:bg-slate-900' : ''}`}>
-          <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} nodeTypes={nodeTypes} fitView colorMode={typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? 'dark' : 'light'}>
+          <ReactFlow nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} nodeTypes={nodeTypes} fitView colorMode={isDark ? 'dark' : 'light'}>
             <Background gap={20} size={1} />
             <Controls />
             <MiniMap />
             <Panel position="top-right" className="flex flex-col items-end pointer-events-none z-50">
-              <button onClick={() => setIsToolbarOpen(!isToolbarOpen)} className="md:hidden mb-2 p-2 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 shadow-xl pointer-events-auto">
+              <button aria-label="Toggle toolbar" onClick={() => setIsToolbarOpen(!isToolbarOpen)} className="md:hidden mb-2 p-2 bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 shadow-xl pointer-events-auto">
                 <svg className="w-6 h-6 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
               </button>
-              <div className={`${isToolbarOpen ? 'flex' : 'hidden'} md:flex bg-white dark:bg-slate-900 p-3 rounded-xl border border-gray-200 dark:border-slate-800 shadow-xl flex-col gap-4 min-w-[200px] pointer-events-auto max-h-[70vh] overflow-y-auto`}>
-                <div className="flex flex-col gap-2">
-                  <button onClick={exportDataJSON} className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg">Download Data (JSON)</button>
-                  <button onClick={exportImagePNG} className="w-full py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg">Download Image (PNG)</button>
-                  <label className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700 text-center">
-                    Load Data (JSON)
-                    <input type="file" accept=".json" onChange={importData} className="hidden" />
-                  </label>
-                </div>
-                <div className="border-t border-gray-200 dark:border-slate-700 pt-3">
-                  <button 
-                    onClick={toggleFullscreen}
-                    className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg mb-4"
+              <div className={`${isToolbarOpen ? 'flex' : 'hidden'} md:flex bg-white dark:bg-slate-900 rounded-xl border border-gray-200 dark:border-slate-800 shadow-xl flex-col min-w-[280px] pointer-events-auto max-h-[80vh] overflow-hidden`}>
+
+                {/* TABS */}
+                <div className="flex border-b border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50">
+                  <button
+                    onClick={() => setActivePanelTab('overview')}
+                    className={`flex-1 py-3 text-xs font-bold text-center transition-colors ${activePanelTab === 'overview' ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-500' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}    
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      {isFullscreen ? (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 9V4.5M9 9H4.5M15 9V4.5M15 9h4.5M9 15v4.5M9 15H4.5M15 15v4.5M15 15h4.5" />
-                      ) : (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                      )}
-                    </svg>
-                    {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                    Overview
                   </button>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Layout Pattern</label>
-                  <div className="flex flex-col gap-2">
-                    <button onClick={() => setLayout('TB')} className={`text-sm px-3 py-1.5 rounded-lg border text-left ${layout === 'TB' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30' : 'bg-transparent border-gray-200 dark:text-white'}`}>Tree (Vertical)</button>
-                    <button onClick={() => setLayout('LR')} className={`text-sm px-3 py-1.5 rounded-lg border text-left ${layout === 'LR' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30' : 'bg-transparent border-gray-200 dark:text-white'}`}>Tree (Horizontal)</button>
-                    <button onClick={() => setLayout('BT')} className={`text-sm px-3 py-1.5 rounded-lg border text-left ${layout === 'BT' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30' : 'bg-transparent border-gray-200 dark:text-white'}`}>Inverse Tree</button>
-                    <button onClick={() => setLayout('RADIAL')} className={`text-sm px-3 py-1.5 rounded-lg border text-left ${layout === 'RADIAL' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30' : 'bg-transparent border-gray-200 dark:text-white'}`}>Star / Radial</button>
-                  </div>
+                  <button
+                    onClick={() => setActivePanelTab('node')}
+                    disabled={!selectedNode}
+                    className={`flex-1 py-3 text-xs font-bold text-center transition-colors disabled:opacity-30 ${activePanelTab === 'node' ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-500' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 disabled:hover:text-slate-500'}`}
+                  >
+                    Selected Node
+                  </button>
                 </div>
-                <div className="border-t border-gray-200 dark:border-slate-700 pt-3">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Node Color</label>
-                  <div className="flex gap-2 items-center">
-                    <input type="color" value={selectedColor} onChange={(e) => applyColorToSelected(e.target.value)} className="w-8 h-8 rounded cursor-pointer border-0 p-0" title="Select nodes, then pick a color" />
-                    <span className="text-xs text-gray-500">Select nodes to recolor</span>
-                  </div>
-                </div>
-                {(() => {
-                  const selectedNode = nodes.find(n => n.selected);
-                  if (!selectedNode) return null;
-                  return (
-                    <div className="border-t border-gray-200 dark:border-slate-700 pt-3 max-w-[250px] flex flex-col gap-2">
-                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Edit Node</label>
-                      <input 
-                        type="text" 
-                        value={selectedNode.data.label || ''} 
-                        onChange={(e) => updateNodeData(selectedNode.id, 'label', e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-2 py-1 text-sm text-black dark:text-white outline-none focus:border-blue-500 font-bold"
-                      />
-                      <textarea 
-                        value={selectedNode.data.description || ''} 
-                        onChange={(e) => updateNodeData(selectedNode.id, 'description', e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs text-black dark:text-white outline-none focus:border-blue-500 h-20 resize-none"
-                      />
-                      <div className="flex gap-2 mt-1">
+
+                <div className="p-4 flex flex-col gap-4 overflow-y-auto">
+                  {/* OVERVIEW TAB */}
+                  {activePanelTab === 'overview' && (
+                    <div className="flex flex-col gap-3">
+                      {/* Global Style Toggle */}
+                      <div className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
                         <button 
-                          onClick={() => handleAddChild(selectedNode.id, selectedNode.data.color)}
-                          className="flex-1 py-1.5 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold transition-colors"
+                          onClick={() => toggleOverviewSection('mode')}
+                          className="w-full flex justify-between items-center bg-gray-50 dark:bg-slate-800/80 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
+                        >
+                          Global Node Mode
+                          <svg className={`w-4 h-4 transition-transform ${openOverviewSections.mode ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        {openOverviewSections.mode && (
+                          <div className="p-3 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex gap-2">
+                            <button onClick={() => setGlobalNodeStyle('filled')} className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-colors ${globalNodeStyle === 'filled' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-400' : 'bg-transparent border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
+                              Filled
+                            </button>
+                            <button onClick={() => setGlobalNodeStyle('bordered')} className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-colors ${globalNodeStyle === 'bordered' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-400' : 'bg-transparent border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
+                              Bordered
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Map Adjustments */}
+                      <div className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                        <button 
+                          onClick={() => toggleOverviewSection('adjustments')}
+                          className="w-full flex justify-between items-center bg-gray-50 dark:bg-slate-800/80 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
+                        >
+                          Map Adjustments
+                          <svg className={`w-4 h-4 transition-transform ${openOverviewSections.adjustments ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        {openOverviewSections.adjustments && (
+                          <div className="p-3 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex flex-col gap-3">
+                            <div>
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Node Spacing</span>
+                                <span className="text-xs text-slate-500">{nodeSpacing.toFixed(1)}x</span>
+                              </div>
+                              <input type="range" min="0.5" max="2.5" step="0.1" value={nodeSpacing} onChange={(e) => setNodeSpacing(parseFloat(e.target.value))} className="w-full accent-blue-600" />
+                            </div>
+                            <div>
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Font Size</span>
+                                <span className="text-xs text-slate-500">{globalFontSize}px</span>
+                              </div>
+                              <input type="range" min="10" max="24" step="1" value={globalFontSize} onChange={(e) => setGlobalFontSize(parseInt(e.target.value))} className="w-full accent-blue-600" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Layout Patterns */}
+                      <div className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                        <button 
+                          onClick={() => toggleOverviewSection('layout')}
+                          className="w-full flex justify-between items-center bg-gray-50 dark:bg-slate-800/80 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
+                        >
+                          Layout Patterns
+                          <svg className={`w-4 h-4 transition-transform ${openOverviewSections.layout ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        {openOverviewSections.layout && (
+                          <div className="p-3 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 grid grid-cols-2 gap-2">
+                            {(['TB', 'LR', 'BT', 'RADIAL'] as const).map((l) => (
+                              <button key={l} onClick={() => setLayout(l)} className={`text-xs px-2 py-2 rounded-lg border text-center transition-colors ${layout === l ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-400' : 'bg-transparent border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                                {l === 'TB' ? 'Tree (Down)' : l === 'LR' ? 'Tree (Right)' : l === 'BT' ? 'Tree (Up)' : 'Radial'}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions & Export */}
+                      <div className="border border-gray-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                        <button 
+                          onClick={() => toggleOverviewSection('actions')}
+                          className="w-full flex justify-between items-center bg-gray-50 dark:bg-slate-800/80 px-3 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
+                        >
+                          Actions & Export
+                          <svg className={`w-4 h-4 transition-transform ${openOverviewSections.actions ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        {openOverviewSections.actions && (
+                          <div className="p-3 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex flex-col gap-2">
+                            <button onClick={exportDataJSON} className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg">
+                              Save Data (JSON)
+                            </button>
+                            <label className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700 text-center shadow-sm">
+                              Load Data (JSON)
+                              <input type="file" accept=".json" onChange={importData} className="hidden" />
+                            </label>
+                            <button 
+                              onClick={exportPDF} 
+                              disabled={exporting}
+                              className="w-full py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg mt-1"
+                            >
+                              {exporting ? (
+                                <>
+                                  <svg className="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                                  Exporting...
+                                </>
+                              ) : 'Export as PDF'}
+                            </button>
+                            <button 
+                              onClick={toggleFullscreen}
+                              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                              className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg mt-1"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {isFullscreen ? (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 9V4.5M9 9H4.5M15 9V4.5M15 9h4.5M9 15v4.5M9 15H4.5M15 15v4.5M15 15h4.5" />
+                                ) : (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                )}
+                              </svg>
+                              {isFullscreen ? 'Exit Fullscreen' : 'Fullscreen View'}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* NODE SETTINGS TAB */}
+                  {activePanelTab === 'node' && selectedNode && (
+                    <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Content</label>
+                        <input
+                          type="text"
+                          value={(selectedNode.data.label as string) || ''}
+                          onChange={(e) => updateNodeData(selectedNode.id, 'label', e.target.value)}
+                          aria-label="Node label"
+                          className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm text-black dark:text-white outline-none focus:border-blue-500 font-bold"
+                          placeholder="Concept Label"
+                        />
+                        <textarea
+                          value={(selectedNode.data.description as string) || ''}
+                          onChange={(e) => updateNodeData(selectedNode.id, 'description', e.target.value)}
+                          aria-label="Node description"
+                          className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-black dark:text-white outline-none focus:border-blue-500 h-24 resize-none"
+                          placeholder="Detailed description..."
+                        />
+                      </div>
+
+                      <div className="border-t border-gray-200 dark:border-slate-700 pt-3">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Node Mode</label>  
+                        <div className="flex gap-2">
+                          <button onClick={() => updateNodeData(selectedNode.id, 'nodeStyle', 'filled')} className={`flex-1 py-1.5 text-xs font-bold rounded-lg border transition-colors ${selectedNode.data.nodeStyle === 'filled' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-400' : 'bg-transparent border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
+                            Filled
+                          </button>
+                          <button onClick={() => updateNodeData(selectedNode.id, 'nodeStyle', 'bordered')} className={`flex-1 py-1.5 text-xs font-bold rounded-lg border transition-colors ${selectedNode.data.nodeStyle === 'bordered' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-400' : 'bg-transparent border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
+                            Bordered
+                          </button>
+                          <button onClick={() => updateNodeData(selectedNode.id, 'nodeStyle', undefined)} className={`flex-1 py-1.5 text-xs font-bold rounded-lg border transition-colors ${!selectedNode.data.nodeStyle ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-400' : 'bg-transparent border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
+                            Global
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-200 dark:border-slate-700 pt-3">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 block">Node Color</label> 
+                        <div className="flex gap-3 items-center">
+                          <input type="color" value={(selectedNode.data.color as string) || '#ffffff'} onChange={(e) => updateNodeData(selectedNode.id, 'color', e.target.value)} className="w-10 h-10 rounded cursor-pointer border-0 p-0 shadow-sm" title="Pick node color" aria-label="Node color picker" />
+                          <span className="text-xs text-gray-500 font-medium">Pick a specific color</span>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-200 dark:border-slate-700 pt-4 flex gap-2">
+                        <button
+                          onClick={() => handleAddChild(selectedNode.id, (selectedNode.data.color as string) || '#ffffff')}       
+                          className="flex-1 py-2.5 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold transition-colors shadow-sm"
                         >
                           + Add Child
                         </button>
                         {!selectedNode.data.isRoot && (
-                          <button 
-                            onClick={() => handleDeleteNode(selectedNode.id)}
-                            className="py-1.5 px-3 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 rounded-lg text-xs font-bold transition-colors"
+                          <button
+                            onClick={() => {
+                                handleDeleteNode(selectedNode.id);
+                                setActivePanelTab('overview');
+                            }}
+                            className="py-2.5 px-4 bg-red-100 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-400 rounded-lg text-xs font-bold transition-colors shadow-sm"
                           >
                             Delete
                           </button>
                         )}
                       </div>
                     </div>
-                  );
-                })()}
+                  )}
+                </div>
               </div>
             </Panel>
           </ReactFlow>
