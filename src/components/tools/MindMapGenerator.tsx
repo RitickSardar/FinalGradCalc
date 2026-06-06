@@ -232,6 +232,12 @@ const GeneratorContent: React.FC = () => {
 
   useEffect(() => {
     setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, globalStyle: globalNodeStyle, globalFontSize } })));
+    if (generatedData.current) {
+      generatedData.current.nodes = generatedData.current.nodes.map((n) => ({
+        ...n,
+        data: { ...n.data, globalStyle: globalNodeStyle, globalFontSize }
+      }));
+    }
   }, [globalNodeStyle, globalFontSize, setNodes]);
 
   useEffect(() => {
