@@ -253,8 +253,18 @@ const GeneratorContent: React.FC = () => {
   };
 
   const onConnect = useCallback(
-    (params: Connection | Edge) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    (params: Connection | Edge) => {
+      const sourceNode = nodes.find(n => n.id === params.source);
+      const color = (sourceNode?.data as any)?.color || '#94a3b8';
+      const edgeParams = {
+        ...params,
+        type: 'bezier',
+        animated: true,
+        style: { stroke: color, strokeWidth: 4 },
+      };
+      setEdges((eds) => addEdge(edgeParams, eds));
+    },
+    [setEdges, nodes]
   );
 
   const applyLayout = useCallback((nodesToLayout: MindMapNode[], edgesToLayout: Edge[], direction: string, spacing: number) => {
@@ -360,7 +370,7 @@ const GeneratorContent: React.FC = () => {
         nodeColors.set(rootId, '#3b82f6');
 
         const majorBranches = adjList.get(rootId) || [];
-        const branchColors = ['#fecaca', '#fde047', '#a7f3d0', '#bfdbfe', '#e9d5ff', '#fbcfe8', '#fdba74'];
+        const branchColors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4'];
 
         majorBranches.forEach((branchId, index) => {
           const color = branchColors[index % branchColors.length];
@@ -391,9 +401,9 @@ const GeneratorContent: React.FC = () => {
           const sourceColor = nodeColors.get(edge.source) || '#94a3b8';
           return {
             ...edge,
-            type: 'default',
+            type: 'bezier',
             animated: true,
-            style: { stroke: sourceColor, strokeWidth: 3 },
+            style: { stroke: sourceColor, strokeWidth: 4 },
           };
         });
 
@@ -468,9 +478,9 @@ const GeneratorContent: React.FC = () => {
       id: `edge_${parentId}_${newNodeId}`,
       source: parentId,
       target: newNodeId,
-      type: 'default',
+      type: 'bezier',
       animated: true,
-      style: { stroke: parentColor || '#94a3b8', strokeWidth: 3 }
+      style: { stroke: parentColor || '#94a3b8', strokeWidth: 4 }
     };
 
     const updatedNodes = [...nodes, newNode] as MindMapNode[];
