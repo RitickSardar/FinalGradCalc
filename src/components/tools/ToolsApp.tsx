@@ -4,6 +4,9 @@ import ToolsIndex from './ToolsIndex';
 
 // Dynamically import heavy components to split the JS bundle
 const MindMapGenerator = lazy(() => import('./MindMapGenerator'));
+const FlashcardGenerator = lazy(() => import('./FlashcardGenerator'));
+const PomodoroTimer = lazy(() => import('./PomodoroTimer'));
+const BoxBreathing = lazy(() => import('./BoxBreathing'));
 const Settings = lazy(() => import('./Settings'));
 
 const LoadingFallback = () => (
@@ -45,6 +48,30 @@ const ToolsNav: React.FC = () => {
           Mind Map
         </Link>
       )}
+      {location.pathname.includes('/flashcards') && (
+        <Link
+          to="/flashcards"
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-purple-600 text-white shadow-lg shadow-purple-600/20`}
+        >
+          Flashcards
+        </Link>
+      )}
+      {location.pathname.includes('/pomodoro') && (
+        <Link
+          to="/pomodoro"
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-red-600 text-white shadow-lg shadow-red-600/20`}
+        >
+          Pomodoro
+        </Link>
+      )}
+      {location.pathname.includes('/breathe') && (
+        <Link
+          to="/breathe"
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-teal-600 text-white shadow-lg shadow-teal-600/20`}
+        >
+          Breathe
+        </Link>
+      )}
       <Link
         to="/settings"
         className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
@@ -69,6 +96,9 @@ const ToolsApp: React.FC = () => {
             <Routes>
               <Route path="/" element={<ToolsIndex />} />
               <Route path="/mindmap" element={<MindMapGenerator />} />
+              <Route path="/flashcards" element={<FlashcardGenerator />} />
+              <Route path="/pomodoro" element={<PomodoroTimer />} />
+              <Route path="/breathe" element={<BoxBreathing />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<ToolsIndex />} />
             </Routes>
