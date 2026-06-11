@@ -12,9 +12,11 @@ import {
   Position,
   useReactFlow,
   ReactFlowProvider,
-  getNodesBounds
+  getNodesBounds,
+  BaseEdge,
+  getBezierPath
 } from '@xyflow/react';
-import type { Connection, Edge, Node } from '@xyflow/react';
+import type { Connection, Edge, Node, EdgeProps } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { GoogleGenAI } from '@google/genai';
 import dagre from 'dagre';
@@ -29,9 +31,56 @@ interface MindMapNodeData extends Record<string, unknown> {
   nodeStyle?: 'filled' | 'bordered';
   globalStyle?: 'filled' | 'bordered';
   globalFontSize?: number;
+  globalExpandAll?: boolean;
 }
 
 type MindMapNode = Node<MindMapNodeData>;
+
+// --- CUSTOM DYNAMIC EDGE ---
+const DynamicEdge = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  style,
+  markerEnd,
+  animated,
+}: EdgeProps) => {
+  const dx = targetX - sourceX;
+  const dy = targetY - sourceY;
+  
+  let sourcePos = Position.Bottom;
+  let targetPos = Position.Top;
+  
+  if (Math.abs(dx) > Math.abs(dy)) {
+    sourcePos = dx > 0 ? Position.Right : Position.Left;
+    targetPos = dx > 0 ? Position.Left : Position.Right;
+  } else {
+    sourcePos = dy > 0 ? Position.Bottom : Position.Top;
+    targetPos = dy > 0 ? Position.Top : Position.Bottom;
+  }
+
+  const [edgePath] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition: sourcePos,
+    targetX,
+    targetY,
+    targetPosition: targetPos,
+  });
+
+  return (
+    <path
+      id={id}
+      style={style}
+      className={`react-flow__edge-path ${animated ? 'animated' : ''}`}
+      d={edgePath}
+      markerEnd={markerEnd}
+      fill="none"
+    />
+  );
+};
 
 // --- CUSTOM LAYOUT ENGINE ---
 const getLayoutedElements = (nodes: MindMapNode[], edges: Edge[], direction = 'TB', spacing = 1) => {
@@ -125,14 +174,27 @@ const CustomNode = ({ data, selected }: any) => {
   const textColor = isFilled ? (data.isRoot ? '#ffffff' : '#000000') : 'inherit';
   const fontSize = data.globalFontSize || 14;
 
-  const showDescription = selected || isPinnedOpen;
+  const showDescription = selected || isPinnedOpen || data.globalExpandAll;
 
   return (
     <div
       className={`group px-4 py-3 rounded-xl border-[3px] transition-all duration-300 min-w-[200px] max-w-[280px] shadow-lg relative ${showDescription ? 'z-40' : ''} ${selected ? (isFilled ? 'border-blue-500 shadow-blue-500/30 scale-110 z-50' : 'ring-4 ring-blue-500/50 shadow-blue-500/30 scale-110 z-50') : 'hover:scale-105'} ${isFilled ? '' : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800'}`}
       style={{ backgroundColor: nodeBg, color: textColor, borderColor: nodeBorder }}
     >
-      <Handle type="target" position={Position.Top} className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
+      {/* Invisible center handles for programmatic edges (default) */}
+      <Handle type="target" position={Position.Top} id="center-target" className="opacity-0 pointer-events-none min-w-0 min-h-0 w-0 h-0" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', border: 'none' }} />
+      <Handle type="source" position={Position.Bottom} id="center-source" className="opacity-0 pointer-events-none min-w-0 min-h-0 w-0 h-0" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', border: 'none' }} />
+
+      {/* Visible handles for manual connection */}
+      <Handle type="target" position={Position.Top} id="top-target" className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
+      <Handle type="target" position={Position.Bottom} id="bottom-target" className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
+      <Handle type="target" position={Position.Left} id="left-target" className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
+      <Handle type="target" position={Position.Right} id="right-target" className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
+
+      <Handle type="source" position={Position.Top} id="top-source" className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
+      <Handle type="source" position={Position.Bottom} id="bottom-source" className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
+      <Handle type="source" position={Position.Left} id="left-source" className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
+      <Handle type="source" position={Position.Right} id="right-source" className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
 
       <div className="flex flex-col gap-1.5">
         <div className="font-bold break-words text-center flex items-center justify-center gap-2 relative" style={{ fontSize: `${fontSize}px` }}>
@@ -152,20 +214,21 @@ const CustomNode = ({ data, selected }: any) => {
       {data.description && (
         <button
           onClick={(e) => { e.stopPropagation(); setIsPinnedOpen(!isPinnedOpen); }}
-          className={`absolute bottom-1.5 right-1.5 focus:outline-none flex items-center justify-center w-5 h-5 rounded-full transition-all border hover:scale-110 z-50 ${isPinnedOpen ? 'bg-green-500 border-green-600 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-white dark:bg-slate-800 border-slate-400 dark:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-sm'}`}
+          className={`absolute bottom-1.5 right-1.5 focus:outline-none flex items-center justify-center w-6 h-6 rounded-full transition-all border hover:scale-110 z-50 ${isPinnedOpen ? 'bg-amber-100 border-amber-300 text-amber-600 dark:bg-amber-900/40 dark:border-amber-700 dark:text-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.4)]' : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 shadow-sm'}`}
           title={isPinnedOpen ? "Unpin Description" : "Pin Description"}
           aria-label="Toggle node description"
         >
-          <div className={`w-2 h-2 rounded-full transition-colors ${isPinnedOpen ? 'bg-white' : 'bg-slate-500 dark:bg-slate-400'}`}></div>
+          <svg className={`w-3.5 h-3.5 transition-all duration-300 ${isPinnedOpen ? 'rotate-[-30deg] scale-90' : 'rotate-0'}`} fill={isPinnedOpen ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 17v5M5 17h14v-1.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.68V6a3 3 0 00-6 0v4.68a2 2 0 01-1.11 1.87l-1.78.9A2 2 0 005 15.24v1.76z"></path>
+          </svg>
         </button>
       )}
-
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-blue-500 transition-opacity opacity-0 group-hover:opacity-100" />
     </div>
   );
 };
 
 const nodeTypes = { custom: CustomNode };
+const edgeTypes = { dynamic: DynamicEdge };
 
 const GeneratorContent: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>(() => {
@@ -184,6 +247,7 @@ const GeneratorContent: React.FC = () => {
   const [isDark, setIsDark] = useState(false);
 
   const [globalNodeStyle, setGlobalNodeStyle] = useState<'filled' | 'bordered'>('filled');
+  const [globalExpandAll, setGlobalExpandAll] = useState(false);
   const [activePanelTab, setActivePanelTab] = useState<'overview' | 'node'>('overview');
   const [nodeSpacing, setNodeSpacing] = useState<number>(1);
   const [globalFontSize, setGlobalFontSize] = useState<number>(14);
@@ -210,6 +274,38 @@ const GeneratorContent: React.FC = () => {
 
   const { fitView, getNodes } = useReactFlow();
 
+  // Load from local storage on mount
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem('mindmap_saved_data');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          if (data.nodes && data.nodes.length > 0 && data.edges) {
+            setNodes(data.nodes);
+            setEdges(data.edges);
+            if (data.topic) setTopic(data.topic);
+            generatedData.current = { nodes: data.nodes, edges: data.edges };
+            setTimeout(() => fitView({ duration: 800, padding: 0.2 }), 50);
+          }
+        } catch (e) {
+          console.error("Failed to parse saved mindmap data", e);
+        }
+      }
+    }
+  }, [setNodes, setEdges, fitView]);
+
+  // Save to local storage on change (debounced)
+  useEffect(() => {
+    if (nodes.length > 0 && typeof localStorage !== 'undefined') {
+      const timer = setTimeout(() => {
+        const dataToSave = { nodes, edges, topic };
+        localStorage.setItem('mindmap_saved_data', JSON.stringify(dataToSave));
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [nodes, edges, topic]);
+
   // Observe dark mode changes properly
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -231,14 +327,14 @@ const GeneratorContent: React.FC = () => {
   }, [selectedNode?.id]);
 
   useEffect(() => {
-    setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, globalStyle: globalNodeStyle, globalFontSize } })));
+    setNodes((nds) => nds.map((n) => ({ ...n, data: { ...n.data, globalStyle: globalNodeStyle, globalFontSize, globalExpandAll } })));
     if (generatedData.current) {
       generatedData.current.nodes = generatedData.current.nodes.map((n) => ({
         ...n,
-        data: { ...n.data, globalStyle: globalNodeStyle, globalFontSize }
+        data: { ...n.data, globalStyle: globalNodeStyle, globalFontSize, globalExpandAll }
       }));
     }
-  }, [globalNodeStyle, globalFontSize, setNodes]);
+  }, [globalNodeStyle, globalFontSize, globalExpandAll, setNodes]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -264,7 +360,7 @@ const GeneratorContent: React.FC = () => {
       const color = (sourceNode?.data as any)?.color || '#94a3b8';
       const edgeParams = {
         ...params,
-        type: 'bezier',
+        type: 'dynamic',
         animated: true,
         style: { stroke: color, strokeWidth: 4 },
       };
@@ -407,7 +503,7 @@ const GeneratorContent: React.FC = () => {
           const sourceColor = nodeColors.get(edge.source) || '#94a3b8';
           return {
             ...edge,
-            type: 'bezier',
+            type: 'dynamic',
             animated: true,
             style: { stroke: sourceColor, strokeWidth: 4 },
           };
@@ -484,7 +580,7 @@ const GeneratorContent: React.FC = () => {
       id: `edge_${parentId}_${newNodeId}`,
       source: parentId,
       target: newNodeId,
-      type: 'bezier',
+      type: 'dynamic',
       animated: true,
       style: { stroke: parentColor || '#94a3b8', strokeWidth: 4 }
     };
@@ -536,7 +632,12 @@ const GeneratorContent: React.FC = () => {
       const padding = 80;
       const contentWidth = nodesBounds.width + padding * 2;
       const contentHeight = nodesBounds.height + padding * 2;
-      const scale = 2; // Reduced from 3 to 2 to prevent memory crashes on large maps while maintaining crispness
+      
+      // Calculate a dynamic scale to ensure high-quality A4 export (target ~3000px on the longest edge)
+      const maxDimension = Math.max(contentWidth, contentHeight);
+      let scale = Math.ceil(3000 / maxDimension);
+      // Clamp scale between 2 and 5 to prevent memory crashes on huge maps while ensuring crispness on small ones
+      scale = Math.min(Math.max(scale, 2), 5);
 
       const transformX = -nodesBounds.x + padding;
       const transformY = -nodesBounds.y + padding;
@@ -554,19 +655,49 @@ const GeneratorContent: React.FC = () => {
         }
       });
 
-      // A3 landscape layout for more breathing room
+      // A4 format dimensions in mm
+      const orientation = contentWidth > contentHeight ? 'landscape' : 'portrait';
+      const a4Width = orientation === 'landscape' ? 297 : 210;
+      const a4Height = orientation === 'landscape' ? 210 : 297;
+
       const pdf = new jsPDF({
-        orientation: contentWidth > contentHeight ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: [contentWidth, contentHeight],
+        orientation: orientation,
+        unit: 'mm',
+        format: 'a4',
         compress: true,
       });
 
+      // Margins and title space
+      const margin = 10; // 10mm margin
+      const titleSpace = 15; // 15mm space for title
+      
+      const maxImgWidth = a4Width - margin * 2;
+      const maxImgHeight = a4Height - margin * 2 - titleSpace;
+
+      const imgRatio = contentWidth / contentHeight;
+      const maxImgRatio = maxImgWidth / maxImgHeight;
+
+      let finalImgWidth = maxImgWidth;
+      let finalImgHeight = maxImgHeight;
+
+      if (imgRatio > maxImgRatio) {
+        // Image is wider, constrain by width
+        finalImgHeight = maxImgWidth / imgRatio;
+      } else {
+        // Image is taller, constrain by height
+        finalImgWidth = maxImgHeight * imgRatio;
+      }
+
+      // Center the image within the available area
+      const xOffset = margin + (maxImgWidth - finalImgWidth) / 2;
+      const yOffset = margin + titleSpace + (maxImgHeight - finalImgHeight) / 2;
+
       // Meta Data and Title Injection
-      pdf.setFontSize(18);
+      pdf.setFontSize(16);
       pdf.setTextColor(isDark ? 255 : 30);
-      pdf.text(topic || 'Mind Map', padding, padding - 20);
-      pdf.addImage(dataUrl, 'PNG', 0, 0, contentWidth, contentHeight, '', 'FAST');
+      pdf.text(topic || 'Mind Map', margin, margin + 8);
+      
+      pdf.addImage(dataUrl, 'PNG', xOffset, yOffset, finalImgWidth, finalImgHeight, '', 'FAST');
 
       pdf.setProperties({
         title: topic || 'Mind Map',
@@ -722,13 +853,20 @@ const GeneratorContent: React.FC = () => {
                           <svg className={`w-4 h-4 transition-transform ${openOverviewSections.mode ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         {openOverviewSections.mode && (
-                          <div className="p-3 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex gap-2">
-                            <button onClick={() => setGlobalNodeStyle('filled')} className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-colors ${globalNodeStyle === 'filled' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-400' : 'bg-transparent border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
-                              Filled
-                            </button>
-                            <button onClick={() => setGlobalNodeStyle('bordered')} className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-colors ${globalNodeStyle === 'bordered' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-400' : 'bg-transparent border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
-                              Bordered
-                            </button>
+                          <div className="p-3 bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex flex-col gap-2">
+                            <div className="flex gap-2">
+                              <button onClick={() => setGlobalNodeStyle('filled')} className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-colors ${globalNodeStyle === 'filled' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-400' : 'bg-transparent border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
+                                Filled
+                              </button>
+                              <button onClick={() => setGlobalNodeStyle('bordered')} className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-colors ${globalNodeStyle === 'bordered' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-400' : 'bg-transparent border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'}`}>
+                                Bordered
+                              </button>
+                            </div>
+                            <div className="flex gap-2 border-t border-gray-100 dark:border-slate-700 pt-2 mt-1">
+                              <button onClick={() => setGlobalExpandAll(!globalExpandAll)} className={`flex-1 py-2 text-xs font-bold rounded-lg border transition-colors ${globalExpandAll ? 'bg-green-50 border-green-500 text-green-700 dark:bg-green-900/30 dark:border-green-400 dark:text-green-400' : 'bg-transparent border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                                {globalExpandAll ? 'Collapse All' : 'Expand All Nodes'}
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
