@@ -87,11 +87,17 @@ const Calculator: React.FC = () => {
             {/* Subtle background glow */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -z-10 transform translate-x-1/2 -translate-y-1/2"></div>
 
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                  <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                </div>
+                <h2 className="text-2xl font-bold text-black dark:text-white tracking-tight">Current Standing</h2>
               </div>
-              <h2 className="text-2xl font-bold text-black dark:text-white tracking-tight">Current Standing</h2>
+              <a href="/tools/breathe" title="Take a deep breath" className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors flex items-center gap-1.5 border border-blue-200 dark:border-blue-500/20 shadow-sm">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                Stressing?
+              </a>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-6">
@@ -167,11 +173,38 @@ const Calculator: React.FC = () => {
               </p>
             </div>
             {requiredFinal > 100 && (
-              <div className="absolute bottom-0 left-0 w-full bg-red-500/90 text-center py-2 text-xs font-bold text-black dark:text-white uppercase tracking-wider backdrop-blur-md">
-                Mathematically Impossible
+              <div className="absolute bottom-0 left-0 w-full bg-red-500/90 text-center py-2 text-sm font-bold text-white tracking-wide backdrop-blur-md">
+                Hey, this one is out of reach. But you are more than a grade. Take a deep breath.
               </div>
             )}
           </div>
+
+          {/* Emotional Support Tool Redirects */}
+          {requiredFinal > 100 ? (
+            <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 p-4 rounded-2xl flex flex-col gap-3">
+              <p className="text-red-800 dark:text-red-300 text-sm font-medium">Right now, priority one is you. Not the math.</p>
+              <div className="flex gap-2">
+                <a href="/tools/breathe" className="flex-1 text-center py-2.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 rounded-xl text-xs font-bold transition-colors shadow-sm">Take a Breather (1 Min)</a>
+                <a href="/tools/mindmap" className="flex-1 text-center py-2.5 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-bold transition-colors shadow-sm">Map Out Next Steps</a>
+              </div>
+            </div>
+          ) : requiredFinal > 75 ? (
+            <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 p-4 rounded-2xl flex flex-col gap-3">
+              <p className="text-amber-800 dark:text-amber-300 text-sm font-medium">It's a steep climb, but you're still in the fight.</p>
+              <div className="flex gap-2">
+                <a href="/tools/mind-map" className="flex-1 text-center py-2.5 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 text-amber-700 dark:text-amber-400 rounded-xl text-xs font-bold transition-colors shadow-sm">Organize the Chaos</a>
+                <a href="/tools/pomodoro" className="flex-1 text-center py-2.5 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-bold transition-colors shadow-sm">Focus Up (Pomodoro)</a>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/30 p-4 rounded-2xl flex flex-col gap-3">
+              <p className="text-green-800 dark:text-green-300 text-sm font-medium">You're in a safe spot! Lock it in.</p>
+              <div className="flex gap-2">
+                <a href="/tools/pomodoro" className="flex-1 text-center py-2.5 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 rounded-xl text-xs font-bold transition-colors shadow-sm">Start a Focus Session</a>
+                <a href="/tools/flashcards" className="flex-1 text-center py-2.5 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-bold transition-colors shadow-sm">Review Flashcards</a>
+              </div>
+            </div>
+          )}
 
           {/* Current Grade Micro-Card */}
           <div className={`border p-5 rounded-2xl flex items-center justify-between transition-colors duration-300 ${currentLetter.bg} ${currentLetter.border}`}>

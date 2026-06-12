@@ -34,6 +34,21 @@ const isActive = (path: string) => {
 		<script type="application/ld+json">
 		{
 			"@context": "https://schema.org",
+			"@type": "SoftwareApplication",
+			"name": "Pass My Finals",
+			"applicationCategory": "EducationalApplication",
+			"operatingSystem": "WebBrowser",
+			"offers": {
+				"@type": "Offer",
+				"price": "0",
+				"priceCurrency": "USD"
+			},
+			"description": "Free final grade calculator and GPA calculator tools for college and high school students."
+		}
+		</script>
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
 			"@type": "FAQPage",
 			"mainEntity": [
 			{
@@ -140,7 +155,7 @@ const isActive = (path: string) => {
 		<footer class="border-t border-gray-200 dark:border-white/10 py-12 bg-transparent transition-colors duration-300">
 			<div class="max-w-7xl mx-auto px-4 text-center space-y-4">
 				<p class="text-gray-600 dark:text-gray-400 text-sm">
-					&copy; {new Date().getFullYear()} PassMyFinals.com. Built for high-performance students.
+					&copy; {new Date().getFullYear()} PassMyFinals.com. Built for stressed students at 11pm. We've got your back.
 				</p>
 				<div class="flex justify-center gap-6 text-xs text-gray-600 dark:text-gray-400">
 					<button id="open-privacy" aria-label="Open Privacy Policy" class="hover:text-black dark:hover:text-white transition-colors cursor-pointer">Privacy Policy</button>

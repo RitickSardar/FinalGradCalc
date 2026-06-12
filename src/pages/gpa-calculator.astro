@@ -2,11 +2,11 @@
 import Layout from '../layouts/Layout.astro';
 import GPACalculator from '../components/GPACalculator';
 
-const title = "Cumulative GPA Calculator | Pass My Finals";
-const description = "Calculate your high school or college GPA with our interactive tool. Supports weighted (AP/Honors) and unweighted GPA calculations.";
+const title = "College & High School GPA Calculator";
+const description = "Fast GPA calculator for college and high school students. Enter your credits and letter grades to calculate your semester and cumulative GPA instantly.";
 ---
 
-<Layout title="GPA Calculator">
+<Layout title={title} description={description}>
 	<main class="relative">
 		<header class="pt-20 pb-12 text-center px-4 max-w-3xl mx-auto space-y-6">
 			<h1 class="text-4xl md:text-6xl font-black tracking-tight text-black dark:text-white leading-tight">
@@ -25,13 +25,18 @@ const description = "Calculate your high school or college GPA with our interact
 			<div class="max-w-4xl mx-auto px-4 prose dark:prose-invert">
 				<h2 class="text-3xl font-bold text-black dark:text-white mb-6">How is GPA Calculated?</h2>
 				<p class="text-gray-700 dark:text-slate-300">
-					Your Grade Point Average (GPA) is a number that summarizes your academic performance. It is calculated by dividing the total number of grade points earned by the total number of credit hours attempted.
+					Your Grade Point Average (GPA) is a number that summarizes your academic performance. It is calculated by dividing the total number of grade points earned by the total number of credit hours attempted. Unsure what your letter grades are worth? Check out our <a href="/grade-scale" class="text-blue-600 dark:text-blue-400 hover:underline">Grade Scale & Grading Bracket</a> chart.
 				</p>
 				<h3 class="text-xl font-semibold text-black dark:text-white mt-8 mb-4">Weighted vs. Unweighted GPA</h3>
 				<ul class="text-gray-600 dark:text-slate-400 space-y-2">
 					<li><strong>Unweighted GPA:</strong> All courses are measured on the same 4.0 scale, regardless of difficulty.</li>
 					<li><strong>Weighted GPA:</strong> Factors in the difficulty of your courses. Typically, AP, IB, or Honors courses are given an extra point (e.g., an 'A' is worth 5.0 instead of 4.0).</li>
 				</ul>
+				
+				<h3 class="text-xl font-semibold text-black dark:text-white mt-8 mb-4">Stressing over a specific class?</h3>
+				<p class="text-gray-600 dark:text-slate-400">
+					If a single final exam is threatening your overall GPA, use our <a href="/" class="text-blue-600 dark:text-blue-400 hover:underline">Finals Calculator</a> to find out exactly what score you need on the test to protect your GPA.
+				</p>
 			</div>
 		</section>
 	</main>
