@@ -256,7 +256,7 @@ const PomodoroTimer: React.FC = () => {
           </div>
 
           <div className="flex justify-center mb-8 relative">
-            <svg width="300" height="300" className="transform -rotate-90 filter drop-shadow-md">
+            <svg viewBox="0 0 300 300" className="w-full max-w-[300px] aspect-square transform -rotate-90 filter drop-shadow-md">
               {/* Background Circle */}
               <circle
                 cx="150"
@@ -280,7 +280,7 @@ const PomodoroTimer: React.FC = () => {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className={`text-6xl font-black tabular-nums ${getModeColor()}`}>
+              <span className={`text-5xl sm:text-6xl font-black tabular-nums ${getModeColor()}`}>
                 {formatTime(timeRemaining)}
               </span>
             </div>

@@ -8,6 +8,55 @@ const description = "Free finals calculator. Find exactly what score you need on
 ---
 
 <Layout title={title} description={description}>
+	<Fragment slot="head">
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "SoftwareApplication",
+			"name": "Pass My Finals Calculator",
+			"applicationCategory": "EducationalApplication",
+			"operatingSystem": "WebBrowser",
+			"offers": {
+				"@type": "Offer",
+				"price": "0",
+				"priceCurrency": "USD"
+			},
+			"description": "Free final grade calculator to find exactly what score you need on your final exam to pass or reach your target grade."
+		}
+		</script>
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "FAQPage",
+			"mainEntity": [
+			{
+				"@type": "Question",
+				"name": "What is a weighted grade?",
+				"acceptedAnswer": {
+				"@type": "Answer",
+				"text": "A weighted grade means different assignments are worth more than others. For example, a final exam worth 30% of your grade has the same impact as 30 homework assignments worth 1% each."
+				}
+			},
+			{
+				"@type": "Question",
+				"name": "How do drop lowest calculations work?",
+				"acceptedAnswer": {
+				"@type": "Answer",
+				"text": "Drop lowest allows you to remove your worst scoring assignment from the grade calculation, effectively removing those points from the denominator and raising your current percentage."
+				}
+			},
+			{
+				"@type": "Question",
+				"name": "What if the calculator says Impossible?",
+				"acceptedAnswer": {
+				"@type": "Answer",
+				"text": "Impossible means that even with a perfect 100% on the final exam, you cannot mathematically reach your target grade based on your current standing and the exam weight."
+				}
+			}
+			]
+		}
+		</script>
+	</Fragment>
 	<main class="relative">
 		{/* Hero Header */}
 		<header class="pt-20 pb-12 text-center px-4 max-w-3xl mx-auto space-y-6">

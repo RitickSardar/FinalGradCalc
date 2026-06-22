@@ -7,6 +7,23 @@ const description = "Fast GPA calculator for college and high school students. E
 ---
 
 <Layout title={title} description={description}>
+	<Fragment slot="head">
+		<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "SoftwareApplication",
+			"name": "GPA Calculator",
+			"applicationCategory": "EducationalApplication",
+			"operatingSystem": "WebBrowser",
+			"offers": {
+				"@type": "Offer",
+				"price": "0",
+				"priceCurrency": "USD"
+			},
+			"description": "Fast GPA calculator for college and high school students to track semester and cumulative GPA."
+		}
+		</script>
+	</Fragment>
 	<main class="relative">
 		<header class="pt-20 pb-12 text-center px-4 max-w-3xl mx-auto space-y-6">
 			<h1 class="text-4xl md:text-6xl font-black tracking-tight text-black dark:text-white leading-tight">

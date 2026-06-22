@@ -15,6 +15,18 @@ export function getStaticPaths() {
 ---
 
 <Layout title="AI Tools - PassMyFinals" description="Experimental AI tools to help you study better. Mind map generator, study planners, and more.">
+  <Fragment slot="head">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Study Tools",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "WebBrowser",
+      "description": "Experimental AI tools to help you study better. Mind map generator, study planners, and more."
+    }
+    </script>
+  </Fragment>
   <div class="max-w-7xl mx-auto px-4 py-8">
     <div class="mb-8">
       <h1 class="text-4xl font-black tracking-tight text-black dark:text-white mb-2">Study <span class="text-blue-600">Tools</span></h1>

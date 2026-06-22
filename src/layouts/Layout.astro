@@ -23,6 +23,22 @@ const isActive = (path: string) => {
 		<title>{title}</title>
 		<meta name="description" content={description} />
 		
+		<!-- Canonical URL -->
+		<link rel="canonical" href={Astro.url.href} />
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content={Astro.url.href} />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:site_name" content="PassMyFinals" />
+
+		<!-- Twitter -->
+		<meta property="twitter:card" content="summary" />
+		<meta property="twitter:url" content={Astro.url.href} />
+		<meta property="twitter:title" content={title} />
+		<meta property="twitter:description" content={description} />
+		
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" />
@@ -31,53 +47,7 @@ const isActive = (path: string) => {
 			<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 		</noscript>
 
-		<script type="application/ld+json">
-		{
-			"@context": "https://schema.org",
-			"@type": "SoftwareApplication",
-			"name": "Pass My Finals",
-			"applicationCategory": "EducationalApplication",
-			"operatingSystem": "WebBrowser",
-			"offers": {
-				"@type": "Offer",
-				"price": "0",
-				"priceCurrency": "USD"
-			},
-			"description": "Free final grade calculator and GPA calculator tools for college and high school students."
-		}
-		</script>
-		<script type="application/ld+json">
-		{
-			"@context": "https://schema.org",
-			"@type": "FAQPage",
-			"mainEntity": [
-			{
-				"@type": "Question",
-				"name": "What is a weighted grade?",
-				"acceptedAnswer": {
-				"@type": "Answer",
-				"text": "A weighted grade means different assignments are worth more than others. For example, a final exam worth 30% of your grade has the same impact as 30 homework assignments worth 1% each."
-				}
-			},
-			{
-				"@type": "Question",
-				"name": "How do drop lowest calculations work?",
-				"acceptedAnswer": {
-				"@type": "Answer",
-				"text": "Drop lowest allows you to remove your worst scoring assignment from the grade calculation, effectively removing those points from the denominator and raising your current percentage."
-				}
-			},
-			{
-				"@type": "Question",
-				"name": "What if the calculator says Impossible?",
-				"acceptedAnswer": {
-				"@type": "Answer",
-				"text": "Impossible means that even with a perfect 100% on the final exam, you cannot mathematically reach your target grade based on your current standing and the exam weight."
-				}
-			}
-			]
-		}
-		</script>
+
 
 		<script is:inline>
 			(function() {
@@ -94,6 +64,7 @@ const isActive = (path: string) => {
 				}
 			})();
 		</script>
+		<slot name="head" />
 	</head>
 	<body class="text-gray-900 dark:text-gray-50 font-['Inter',sans-serif] selection:bg-blue-500/30 transition-colors duration-300">
 		
