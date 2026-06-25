@@ -776,7 +776,7 @@ const GeneratorContent: React.FC = () => {
     <div className="w-full h-[calc(100vh-200px)] min-h-[600px] flex flex-col">
       <div className="p-4 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 flex flex-col sm:flex-row gap-4 items-center">
         <div className="flex-1 w-full relative">
-          <input type="text" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="What do you want to learn?" className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-black dark:text-white outline-none focus:border-blue-500 shadow-sm" onKeyDown={(e) => e.key === 'Enter' && generateMindMap()} />
+          <textarea rows={1} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="What do you want to learn? (Press Enter for new line, Ctrl+Enter to generate)" className="w-full bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-black dark:text-white outline-none focus:border-blue-500 shadow-sm resize-y min-h-[50px]" onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); generateMindMap(); } }} />
         </div>
         <button onClick={generateMindMap} disabled={loading} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
           {loading ? (
